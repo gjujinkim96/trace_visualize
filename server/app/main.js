@@ -185,7 +185,9 @@ app.post('/trace/:traceName?', async (req, res)=> {
         console.log(`Inserted ${result[0].affectedRows} txs to trace: ${traceName}`)
         return res.send(`Inserted ${result[0].affectedRows} txs to trace: ${traceName}`)
     } catch (e) {
-        await connection.rollback()
+        if (connection) {
+            await connection.rollback()
+        }
         return handleErrorMsg(res, e, 500, 'Something wrong with db.',
             `Some problem with db: /trace/${traceName}`)
     }

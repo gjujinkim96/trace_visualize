@@ -1,0 +1,216 @@
+<!doctype html>
+<html>
+<head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid;
+    }
+
+    th {
+        /* border: 1px solid; */
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        background-color: #277da1;
+        color: white;
+    }
+
+    td {
+        text-align: center;
+        /* border: 1px solid; */
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        color: white;
+    }
+
+    tr:hover {background-color: coral;}
+    tr:nth-child(odd) {background-color: #4d908e;}
+    tr:nth-child(even) {background-color: #577590;}
+
+    .alert {
+        padding: 20px;
+        background-color: #f44336; /* Red */
+        color: white;
+        position:absolute;
+        left: 5px;
+        right: 5px;
+        top: 5px;
+    }
+
+        /* The close button */
+    .closebtn {
+        margin-left: 15px;
+        color: white;
+        font-weight: bold;
+        float: right;
+        font-size: 22px;
+        line-height: 20px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        /* When moving the mouse over the close button */
+    .closebtn:hover {
+        color: black;
+    }
+
+    .pageInput {
+        width: 30px;
+    }
+
+    .selectbtn {
+        float: right;
+    }
+</style>
+<body style="background-color: #A3CCBE">
+    <div class="alert" style="display: none;">
+        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+        Nothing selected.
+    </div>
+    <h1>tx 고르기</h1>
+    <div>
+        <textarea class="queryArea" style="display: inline-block;" placeholder="select * from tx order by gen"></textarea>
+        <button class="querybtn" onclick="sqlQuery()">SQL 실행</button>
+        <text class="errorMsg"></text>
+    </div>
+    <div>
+    <div id="table">
+    </div>
+    <div>
+        <button onclick="moveLeft()"><<</button>
+        <button onclick="moveRight()">>></button>
+        <input class="pageInput"></input>
+        <button onclick="moveByInput()">Go</button>
+        <text class="paginationProgress">1/1</text>
+        <button class="selectbtn" onclick="onButtonClicked()">SELECT</button>
+    </div>
+    <script>
+        var curPage = 1,
+            maxPage = 0,
+            maxElePerPage = 10;
+
+
+        var data;
+
+        async function sqlQuery() {
+            let qA = d3.select('.queryArea');
+            let stmt = qA.node().value
+            
+            if (!stmt) {
+                stmt = qA.node().placeholder
+            }
+
+            let url = new URL(window.location.href)
+            let traceId = url.searchParams.get('traceId')
+            let result = await fetch(`${window.location.protocol}//${window.location.host}/tx/${traceId}?sql=${stmt}`)
+
+            if (result.ok) {
+                data = await result.json()
+                d3.select('.errorMsg').text('')
+                maxPage = Math.ceil(data.length / maxElePerPage)
+                d3.select('.paginationProgress').text(`${curPage}/${maxPage}`)
+                buildTable(data.slice(0, maxElePerPage))
+            } else {
+                let alertDiv = d3.select('.alert')
+                    .style('display', 'block')
+                    .text('wrong SQL')
+                setTimeout(()=>alertDiv.style('display', 'none'), 1000);
+                d3.select('.errorMsg').text(await result.text())
+            }
+        }
+
+        function moveByInput() {
+            let newNb = parseInt(d3.select('.pageInput').node().value)
+            if (!isNaN(newNb)) {
+                if (1 <= newNb && newNb <= maxPage) {
+                    curPage = newNb
+                    d3.select('.paginationProgress').text(`${curPage}/${maxPage}`)
+                    buildTable(data.slice(maxElePerPage*(curPage-1), curPage*maxElePerPage))
+                }
+            }
+        }
+
+        
+        function moveLeft() {
+            if (curPage > 1) {
+                curPage -= 1;
+                d3.select('.paginationProgress').text(`${curPage}/${maxPage}`)
+                buildTable(data.slice(maxElePerPage*(curPage-1), curPage*maxElePerPage))
+            }
+        }
+
+        function moveRight() {
+            if (curPage < maxPage) {
+                curPage += 1;
+                d3.select('.paginationProgress').text(`${curPage}/${maxPage}`)
+                buildTable(data.slice(maxElePerPage*(curPage-1), curPage*maxElePerPage))
+            }
+        }
+
+        var lastClicked;
+
+        function buildTable(data) {
+            d3.select('.selectionTable').remove()
+            let table = d3.select('#table')
+                .append('table')
+                .classed('selectionTable', true)
+            let thead = table.append('thead')
+            let tbody = table.append('tbody')
+
+            if (data.length == 0) {
+                return;
+            }
+            
+            let columns = Object.keys(data[0]);
+            thead.append('tr')
+                .selectAll(null)
+                .data(columns)
+                .enter()
+                .append('th')
+                .text(d=>d)
+
+            let rows = tbody.selectAll(null)
+                .data(data)
+                .enter()
+                .append('tr')
+
+            lastClicked = null
+            let lastBGColor = null
+            rows.on('click', function (event) {
+                if (lastClicked) {
+                    lastClicked.style.backgroundColor = lastBGColor
+                }
+
+                lastClicked = event.currentTarget
+                lastBGColor = event.currentTarget.style.backgroundColor
+
+                event.currentTarget.style.backgroundColor = 'red'
+            })
+
+            let cells = rows.selectAll('td')
+                .data(d=>Object.values(d))
+                .enter()
+                .append('td')
+                .html(d=>d)
+        }
+
+        function onButtonClicked() {
+            if (lastClicked) {
+                let url = new URL(window.location.href)
+                let traceId = url.searchParams.get('traceId')
+                let target = lastClicked.children[0].innerText
+                window.location = `${window.location.protocol}//${window.location.host}/graph.html?traceId=${traceId}&target=${target}`
+            } else {
+                let alertDiv = d3.select('.alert')
+                    .style('display', 'block')
+                    .text('Nothing selected.')
+                setTimeout(()=>alertDiv.style('display', 'none'), 1000);
+            }
+        }
+
+        d3.select('.querybtn').node().click()
+    </script>
+</body>

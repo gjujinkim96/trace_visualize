@@ -1,0 +1,182 @@
+<!doctype html>
+<html>
+<head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid;
+    }
+
+    th {
+        /* border: 1px solid; */
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        background-color: #277da1;
+        color: white;
+    }
+
+    td {
+        text-align: center;
+        /* border: 1px solid; */
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        color: white;
+    }
+
+    tr:hover {background-color: coral;}
+    tr:nth-child(odd) {background-color: #4d908e;}
+    tr:nth-child(even) {background-color: #577590;}
+
+    .alert {
+        padding: 20px;
+        background-color: #f44336; /* Red */
+        color: white;
+        margin-bottom: 15px;
+    }
+
+        /* The close button */
+    .closebtn {
+        margin-left: 15px;
+        color: white;
+        font-weight: bold;
+        float: right;
+        font-size: 22px;
+        line-height: 20px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        /* When moving the mouse over the close button */
+    .closebtn:hover {
+        color: black;
+    }
+
+    .selectbtn {
+        float: right;
+    }
+
+    .pageInput {
+        width: 20px;
+    }
+</style>
+<body style="background-color: #A3CCBE">
+    <div class="alert" style="display: none;">
+        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+        Nothing selected.
+    </div>
+    <h1>Trace Info</h1>
+    <div>
+    <div id="table">
+    </div>
+    <div>
+        <button onclick="moveLeft()"><<</button>
+        <button onclick="moveRight()">>></button>
+        <input class="pageInput"></input>
+        <button onclick="moveByInput()">Go</button>
+        <text class="paginationProgress">1/1</text>
+        <button class="selectbtn" onclick="onButtonClicked()">SELECT</button>
+    </div>
+    <script>
+        function moveByInput() {
+            let newNb = parseInt(d3.select('.pageInput').node().value)
+            if (!isNaN(newNb)) {
+                if (1 <= newNb && newNb <= maxPage) {
+                    curPage = newNb
+                    d3.select('.paginationProgress').text(`${curPage}/${maxPage}`)
+                    buildTable(data.slice(maxElePerPage*(curPage-1), curPage*maxElePerPage))
+                }
+            }
+        }
+
+        function onButtonClicked() {
+            if (lastClicked) {
+                let traceId = lastClicked.children[0].innerText
+                window.location = `${window.location.protocol}//${window.location.host}/tracePage.html?traceId=${traceId}`
+            } else {
+                let alertDiv = d3.select('.alert').style('display', 'block')
+                setTimeout(()=>alertDiv.style('display', 'none'), 1000);
+            }
+        }
+
+        d3.select(window)
+            .on('load', onLoad)
+
+        var curPage = 1,
+            maxPage = 0,
+            maxElePerPage = 10;
+
+        var data = null;
+        async function onLoad() {
+            let result = await fetch(`${window.location.protocol}//${window.location.host}/trace`)
+            data = await result.json()
+
+            maxPage = Math.ceil(data.length / maxElePerPage)
+            d3.select('.paginationProgress').text(`${curPage}/${maxPage}`)
+            buildTable(data.slice(0, maxElePerPage))
+        }
+
+        
+        function moveLeft() {
+            if (curPage > 1) {
+                curPage -= 1;
+                d3.select('.paginationProgress').text(`${curPage}/${maxPage}`)
+                buildTable(data.slice(maxElePerPage*(curPage-1), curPage*maxElePerPage))
+            }
+        }
+
+        function moveRight() {
+            if (curPage < maxPage) {
+                curPage += 1;
+                d3.select('.paginationProgress').text(`${curPage}/${maxPage}`)
+                buildTable(data.slice(maxElePerPage*(curPage-1), curPage*maxElePerPage))
+            }
+        }
+
+        var lastClicked;
+
+        function buildTable(data) {
+            let columns = Object.keys(data[0]);
+
+            d3.select('.selectionTable').remove()
+            let table = d3.select('#table')
+                .append('table')
+                .classed('selectionTable', true)
+            let thead = table.append('thead')
+            let tbody = table.append('tbody')
+
+            thead.append('tr')
+                .selectAll(null)
+                .data(columns)
+                .enter()
+                .append('th')
+                .text(d=>d)
+
+            let rows = tbody.selectAll(null)
+                .data(data)
+                .enter()
+                .append('tr')
+
+            lastClicked = null
+            let lastBGColor = null
+            rows.on('click', function (event) {
+                if (lastClicked) {
+                    lastClicked.style.backgroundColor = lastBGColor
+                }
+
+                lastClicked = event.currentTarget
+                lastBGColor = event.currentTarget.style.backgroundColor
+
+                event.currentTarget.style.backgroundColor = 'red'
+            })
+
+            let cells = rows.selectAll('td')
+                .data(d=>Object.values(d))
+                .enter()
+                .append('td')
+                .html(d=>d)
+        }
+    </script>
+</body>

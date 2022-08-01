@@ -1,0 +1,586 @@
+<!doctype html>
+<html>
+<head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<style>
+    .barRect {
+        /* fill: orange; */
+        /* fill-opacity: 0.4; */
+        stroke: black;
+        stroke-opacity: 0.8;
+    }
+
+    .yGrid {
+        opacity: 0.4;
+        stroke-dasharray: 4 8; 
+    }
+
+    .backgroundRect {
+        fill-opacity: 0.5;
+    }
+
+    .typeRect {
+        /* stroke: black; */
+    }
+
+    .legendRect {
+        stroke: black;
+    }
+
+    .legendText {
+        fill-opacity: 0.8;
+        font-size: 15px;
+    }
+
+    .legendTitle {
+        fill-opacity: 0.8;
+        font-size: 18px;
+    }
+
+    .alert {
+        padding: 20px;
+        background-color: #f44336; /* Red */
+        color: white;
+        /* margin-bottom: 15px; */
+        position:absolute;
+        left: 5px;
+        right: 5px;
+        top: 5px;
+    }
+
+    .closebtn {
+        margin-left: 15px;
+        color: white;
+        font-weight: bold;
+        float: right;
+        font-size: 22px;
+        line-height: 20px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+</style>
+<body style="background-color: #A3CCBE">
+    <script>
+        /* 
+         * FUNCTIONS
+         *
+         */
+
+        function updateYAxis(event, txs) {     
+            y2 = event.transform.rescaleY(y);
+            yAxis.scale(y2);
+            yGridAxis.scale(y2);
+
+            curYDomainIndex = getCurYDomainIndex()
+
+            yAxis.tickValues(tickValues.slice(...curYDomainIndex))
+            yAxisG.call(yAxis)
+
+            yGridAxis.tickValues(gridValues.slice(...curYDomainIndex))
+            
+            let apprxYCnt = getLen(y2.domain()) / (barHeight+barMargin)
+            let gridWidth = width;
+            if (apprxYCnt >= 50) {
+                gridWidth = 0;
+            }
+            yGridAxis.tickSize(gridWidth, 0);
+            yGridG.call(yGridAxis);
+
+            plotArea.select('.graphTop').remove()
+            topG = plotArea.append('g')
+                .classed('graphTop', true);
+
+            drawBars(topG, txs)
+        }
+
+        function updateXAxis(event) {
+            x2 = event.transform.rescaleX(x);
+            xAxisG.call(xAxis.scale(x2));  
+
+            updateXBackroundRect()
+            updateXSourceRect()
+            updateXTypeRect()
+            updateXTargetRect()
+            updateXBarRect()
+        }
+
+        function getCurYDomainIndex() {
+            return [
+                Math.max(Math.ceil((y2.domain()[0] - barHeight/2)/(barHeight+barMargin)), 0),
+                Math.ceil((y2.domain()[1] - barHeight/2)/(barHeight+barMargin))
+            ]
+        }
+
+        function drawBarsGroup(root, txs) {
+            return root.selectAll(null)
+                .data(txs.slice(...curYDomainIndex))
+                .enter()
+                .append('g')
+        }
+
+        let backgroundRectX = ()=>x2(xSize[0])
+        let backgroundRectWidth = ()=>x2(xSize[1])-x2(xSize[0])
+        function drawBackgroundRect(root) {
+            return root.append('rect')
+                .attr('x', backgroundRectX())
+                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
+                .attr('width', backgroundRectWidth())
+                .attr('height', y2(barHeight+barMargin) - y2(0))
+                .classed('backgroundRect', true)
+                .attr('fill', d=>getBackGroundColor(d))
+                .attr("clip-path","url(#clippy)")
+        }
+
+        function updateXBackroundRect() {
+            d3.selectAll('backgroundRect')
+                .attr('x', backgroundRectX())
+                .attr('width', backgroundRectWidth())
+        }
+
+        let sourceRectX = ()=>x2(xSize[0]-getLen(x2.domain()) * 2*infoOffset)
+        let sourceRectWidth = ()=>x2(getLen(x2.domain()) * infoOffset/2)-x2(0)
+        function drawSourceRect(root) {
+            return root.append('rect')
+                .attr('x', sourceRectX())
+                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
+                .attr('width', sourceRectWidth())
+                .attr('height', y2(barHeight+barMargin) - y2(0))
+                .attr('fill', d=>sourceColors[d.txSource])
+                .attr('stroke', d=>sourceColors[d.txSource])
+                .classed('sourceRect', true)
+                .attr("clip-path","url(#clippy)")
+        }
+
+        function updateXSourceRect() {
+            d3.selectAll('sourceRect')
+                .attr('x', sourceRectX())
+                .attr('width', sourceRectWidth())
+        }
+
+        let typeRectX = ()=>x2(xSize[0]-getLen(x2.domain()) * infoOffset);
+        let typeRectWidth = ()=>x2(getLen(x2.domain()) * infoOffset/2)-x2(0)
+        function drawTypeRect(root) {
+            return root.append('rect')
+                .attr('x', typeRectX)
+                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
+                .attr('width', typeRectWidth())
+                .attr('height', y2(barHeight+barMargin) - y2(0))
+                .attr('fill', d=>typeColors[d.txType])
+                .attr('stroke', d=>typeColors[d.txType])
+                .classed('typeRect', true)
+                .attr("clip-path","url(#clippy)")
+        }
+
+        function updateXTypeRect() {
+            d3.selectAll('typeRect')
+                .attr('x', typeRectX())
+                .attr('width', typeRectWidth())
+        }
+
+        let barRectX = d=>x2(d.gen);
+        let barRectWidth = d=>x2(d.fin)-x2(d.gen)
+        function drawBarRect(root) {
+            return root.append('rect')
+                .attr('x', barRectX)
+                .attr('y', d=> y2(d.order * (barHeight+barMargin)))
+                .attr('width', barRectWidth)
+                .attr('height', y2(barHeight)-y2(0))
+                .classed('barRect', true)
+                .attr('fill', getBarRectColor)
+                .attr("clip-path","url(#clippy)")  
+        }
+
+        function updateXBarRect() {
+            d3.selectAll('barRect')
+                .attr('x', barRectX)
+                .attr('width', barRectWidth)
+        }
+
+        let targetRectX = ()=>x2(xSize[0]-getLen(x2.domain())*(1+1/2) *infoOffset);
+        let targetRectWidth = ()=>x2(getLen(x2.domain()) * infoOffset/2)-x2(0)
+        function drawXTargetRect(root) {
+            return root.append('rect')
+                .attr('x', targetRectX)
+                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
+                .attr('width', targetRectWidth())
+                .attr('height', y2(barHeight+barMargin) - y2(0))
+                .attr('fill', d=>Object.values(targetColor)['target' in d ? d.target : 0])
+                .attr('stroke', d=>Object.values(targetColor)['target' in d ? d.target : 0])
+                .classed('targetRect', true)
+                .attr("clip-path","url(#clippy)")
+        }
+
+        function updateXTargetRect() {
+            d3.selectAll('typeRect')
+                .attr('x', targetRectX())
+                .attr('width', targetRectWidth())
+        }
+
+        function updateXBarRect() {
+            d3.selectAll('barRect')
+                .attr('x', barRectX)
+                .attr('width', barRectWidth)
+        }
+
+        function drawBars(root, txs) {
+            let barsG = drawBarsGroup(root, txs)
+            drawBackgroundRect(barsG)
+            drawSourceRect(barsG)
+            drawTypeRect(barsG)
+            drawXTargetRect(barsG)
+            drawBarRect(barsG)
+        }
+
+        function getLen(d) {
+            return d[1] - d[0];
+        }
+
+        let sourceMap = ['USERIO', 'CACHE', 'GC', 'MAPPING']
+        let typeMap = ['READ', 'WRITE', 'ERASE']
+        let targetMap = ['X', 'O']
+
+        const nonColor = 'chocolate';//'darkgoldenrod'
+        const colors = ['lightskyblue', 'lightcoral', 'lightsalmon', 'lightslategray']
+        const sourceColors = {
+            'USERIO': 'darkgreen', 
+            'CACHE': 'darkred', 
+            'GC': 'yellow', 
+            'MAPPING': 'navy'
+        }
+        const typeColors = {
+            'READ': 'royalblue', 
+            'WRITE': 'tomato', 
+            'ERASE': 'yellowgreen'
+        }
+        const targetColor = {
+            'X': '#ffffff00', 
+            'O': 'red'
+        }
+        function getBackGroundColor(d) {
+            if (d.txSource != 'USERIO') {
+                return sourceColors[d.txSource]
+            }
+
+            let idx = seenOrder[d.requestsId] % colors.length;
+            return colors[idx];
+        }
+
+        function getBarRectColor(d) {
+            if (d.target === 1) {
+                return Object.values(targetColor)[1];
+            } else {
+                return typeColors[d.txType];
+            }
+        }
+
+        function drawLegend(root, colors, texts, title, className) {
+            let arrColors = Object.keys(colors).map(d=>[d, colors[d]])
+
+            let legendRootG = root.append('g')
+
+            legendRootG.append('rect')
+                .attr('x', -4)
+                .attr('y', -20)
+                .attr('width', 86)  
+                .attr('height', arrColors.length * 20+20)
+                .attr('fill-opacity', 0)
+                // .attr('fill', '#A3CCBE')
+                .attr('stroke', 'black')
+
+            legendRootG.append('text')
+                .text(title)
+                .classed(className.title, true)
+                .attr('x', 41)
+                .attr('dy', '-0.25em')
+                .style("text-anchor", "middle")
+
+            
+            let legendsG = legendRootG.append('g')
+                .selectAll(null)
+                .data(arrColors)
+                .enter()
+                .append('g')
+
+            legendsG.append('rect')
+                .attr('y', (d, i)=> i*20)
+                .attr('width', 15)
+                .attr('height', 15)
+                .attr('fill', d=>d[1])
+                .classed(className.rect, true)
+                
+            legendsG.append('text')
+                .attr('y', (d, i)=>i*20)
+                .attr('x', 15)
+                .attr('dy', '0.85em')
+                .attr('dx', '0.2em')
+                .text(d=>d[0])
+                .classed(className.text, true)
+        }
+
+        function drawLegends(root, needTarget) {
+            let legendG = root.append('g')
+                .attr("transform","translate("+[width + padding.left+10, 50]+")")
+                .classed('legends', true)
+
+            let sourceLegendG = legendG.append('g')
+                .attr("transform","translate("+[0, 0]+")")
+                .classed('sourceLegendG', true)
+
+            let typeLegendG = legendG.append('g')
+                .attr("transform","translate("+[0, 100]+")")  
+                .classed('typeLegendG', true)
+
+            let targetLegendG = legendG.append('g')
+            .attr("transform","translate("+[0, 180]+")")  
+                .classed('targetLegendG', true)
+
+            drawLegend(sourceLegendG, sourceColors, sourceMap, 'Source',
+                {rect:'legendRect', text:'legendText', title:'legendTitle'})
+
+            drawLegend(typeLegendG, typeColors, typeMap, 'Type',
+                {rect:'legendRect', text:'legendText', title:'legendTitle'})
+
+            if (needTarget) {
+                drawLegend(targetLegendG, targetColor, targetMap, 'Target',
+                {rect:'legendRect', text:'legendText', title:'legendTitle'})
+            }
+        }
+
+        function getXScale() {
+            return d3.scaleLinear()
+                .range([0, width])
+                .domain([xSize[0]-getLen(xSize)*infoOffset*2.5, xSize[1]]);
+        }
+
+        function getYScale() {
+            const maxBars = Math.floor(height / (barHeight+barMargin));
+
+            return d3.scaleLinear()
+                .range([0, height])
+                .domain([0, maxBars*(barHeight+barMargin)]);
+        }
+
+        function getSeenOrder(txs) {
+            const seenOrder = {'CACHE': txs.length, 'GC': txs.length+1, 'MAPPING': txs.length+2};
+            let order = 0;
+            
+            txs.forEach(function(ele, i) {
+                if (!(ele.requestsId in seenOrder)) {
+                    seenOrder[ele.requestsId] = order;
+                    order += 1;
+                }
+            });
+
+            return seenOrder;
+        }
+
+        /*
+         * MAIN
+         *
+         * 
+         */
+        const margin = {w: 20, h: 80};
+        const padding = {top: 20, bottom: 50, left: 80, right: 110};
+        const barHeight = 20;
+        const barMargin = 4;
+        const infoOffset = 0.08;  
+
+
+        const width = window.innerWidth - padding.right - padding.left - margin.w;
+        const height = window.innerHeight - padding.top - padding.bottom - margin.h;
+
+        let url = new URL(window.location.href)
+        let traceId = url.searchParams.get('traceId')
+        let target = url.searchParams.get('target')
+
+        const body = d3.select("body");
+        const topBar = body.append('div');
+        var b;
+
+        if (!target) {
+            const alertDiv = body.append('div')
+                .text('Wrong Sql')
+                .style('display', 'none')
+                .classed('alert', true)
+            const xButton = alertDiv.append('span')
+                .attr('onclick', "this.parentElement.style.display='none';")
+                .html('&times;')
+                .classed('closebtn', true)
+
+            var stmtDefault = 'select * from tx order by gen';
+            let inp = topBar.append('textarea')
+                .style('display', 'inline-block')
+                .attr('placeholder', stmtDefault)
+                .classed('queryArea', true)
+            
+            b = topBar.append('button')
+                .text('click')
+                .style('display', 'inline-block')
+                .on('click', onclick)
+        } else {
+            b = topBar.append('button')
+                .style('display', 'none')
+                .on('click', onTargetClick);
+        }
+
+        let info = topBar.append('text')
+            .text('Total 0 transactions')
+
+        async function onclick() {
+            let stmt = d3.select('.queryArea').node().value;
+
+            if (!stmt) {
+                stmt = stmtDefault;
+            }
+
+            console.log('STMT', stmt)
+
+
+
+            let result = await fetch(`${window.location.protocol}//${window.location.host}/tx/${traceId}?sql=${stmt}`)
+
+            if (result.ok) {
+                let data = await result.json()
+                info.text(`Total ${data.length} transactions`)
+                console.log(data[0])
+                updateByNewData(data)
+            } else {
+                let alertDiv = d3.select('.alert')
+                    .style('display', 'block')
+                setTimeout(()=>alertDiv.style('display', 'none'), 1000);
+                info.text(await result.text())
+            }
+        }
+
+        async function onTargetClick() {
+            let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A where A.gen <= tx.fin and tx.gen <= A.fin order by tx.gen, tx.requestsId, tx.txId, tx.fin`
+
+            console.log('STMT', stmt)
+
+            let url = new URL(window.location.href)
+
+            let fetchUrl = `${window.location.protocol}//${window.location.host}/tx/${traceId}?sql=${stmt}`
+            console.log(fetchUrl)
+            let result = await fetch(fetchUrl)
+
+            if (result.ok) {
+                let data = await result.json()
+                info.text(`Total ${data.length} transactions`)
+                console.log(data[0])
+                updateByNewData(data)
+            } else {
+                console.log('What')
+                console.log('bad', result)
+                info.text('Something went wrong')
+            }
+        }
+
+            
+        const svg = body
+            .append('svg')
+            .attr("width", width + padding.right + padding.left)
+            .attr("height", height + padding.top + padding.bottom)
+        
+        const plotArea = svg.append("g")
+            .attr("transform","translate("+[padding.left,padding.top]+")")  
+            .classed('plotArea', true)
+
+        const clippingRect = plotArea
+            .append("clipPath")
+            .attr("id", "clippy")
+            .append("rect")
+            .attr("width",width)
+            .attr("height",height)
+            .attr("fill","none")
+
+
+        var x, x2, xSize, xAxis, 
+            y, y2, yAxis,
+            curYDomainIndex, gridValues, tickValues, seenOrder,
+            yGridAxis, topG;
+
+        const xAxisG = plotArea.append('g')
+            .classed('xAxis', true)
+
+        const yAxisG = plotArea.append("g")
+            .classed('yAxis', true)
+
+        const yGridG = plotArea.append('g')
+            .classed('yGrid', true)
+            .attr("clip-path","url(#clippy)") 
+
+        function updateByNewData(txs) {
+            console.log(`Total transactions: ${txs.length}`)
+            seenOrder = getSeenOrder(txs)
+            txs.forEach(function(ele, i) {
+                ele.order = i;
+            });
+
+            tickValues = txs.map((e, i)=> i * (barHeight+barMargin)+barHeight/2);    
+
+            xSize = [d3.min(txs, d=>d.gen), d3.max(txs, d=>d.fin)]
+            x = getXScale();
+            x2 = x.copy();
+
+            xAxis = d3.axisTop(x2)
+            xAxisG.call(xAxis);
+
+            
+            y = getYScale();
+            y2 = y.copy();
+
+            
+            curYDomainIndex = getCurYDomainIndex()
+            
+            yAxis = d3.axisLeft(y2)
+                .tickFormat(function(d){
+                    order = (d-barHeight/2)/(barHeight+barMargin);
+
+                    if (txs[order].txId != null) {
+                        return txs[order].requestsId+'='+txs[order].txId
+                    } else {
+                        return txs[order].requestsId
+                    }
+                    
+                })
+                .tickValues(tickValues.slice(...curYDomainIndex))
+            
+            yAxisG.call(yAxis)
+
+            plotArea.select('.graphTop').remove()
+            topG = plotArea.append('g')
+                .classed('graphTop', true);
+                
+            drawBars(topG, txs)      
+            
+
+            gridValues = txs.map(e=> e.order * (barHeight+barMargin)-barMargin/2);
+            yGridAxis = d3.axisRight(y2)
+                .tickSize(width, 0)
+                .tickFormat("")
+                .tickValues(gridValues.slice(...curYDomainIndex))
+
+
+            yGridG.call(yGridAxis)
+
+
+            svg.select('.legends').remove()
+
+            let isTarget = txs.length > 0 && 'target' in txs[0]
+            drawLegends(svg, isTarget)
+
+            const zoom = d3.zoom()
+                .on("zoom", function(event) {
+                    updateYAxis(event, txs);
+                    updateXAxis(event);
+                })
+
+            let zoomObj = svg.call(zoom);
+            zoomObj.call(zoom.transform, d3.zoomIdentity)
+        }
+
+        b.node().click();
+    </script>
+</body>
+</html>

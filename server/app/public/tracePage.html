@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<style>
+</style>
+<body style="background-color: #A3CCBE">
+    <h1>Trace 보기</h1>
+    <div>
+        <button onclick="justView()">그냥 보기</button>
+        <button onclick="targetView()">특정 tx랑 겹친 경우 보기</button>
+    </div>
+    <script>
+        function justView() {
+            let url = new URL(window.location.href)
+            let traceId = url.searchParams.get('traceId')
+            window.location = `${window.location.protocol}//${window.location.host}/graph.html?traceId=${traceId}`
+        }
+
+        function targetView() {
+            let url = new URL(window.location.href)
+            let traceId = url.searchParams.get('traceId')
+            window.location = `${window.location.protocol}//${window.location.host}/targetSelection.html?traceId=${traceId}`
+        }
+    </script>
+</body>

@@ -537,10 +537,10 @@
                 .tickFormat(function(d){
                     order = (d-barHeight/2)/(barHeight+barMargin);
 
-                    if (txs[order].txId != null) {
+                    if (txs[order].txSource === 'USERIO') {
                         return txs[order].requestsId+'='+txs[order].txId
                     } else {
-                        return txs[order].requestsId
+                        return txs[order].txSource;
                     }
                     
                 })

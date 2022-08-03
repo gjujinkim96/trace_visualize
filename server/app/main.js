@@ -157,16 +157,18 @@ app.post('/trace/:traceName?', async (req, res)=> {
             let line = v.split(',');
             var gen = parseInt(line[0]),
                 fin = parseInt(line[1]),
-                requestsId = line[2],
+                requestsId,
                 txSource,
                 txType,
                 txId;
         
             if (line.length === 4) {
+                requestsId = null;
                 txSource = line[2];
                 txType = line[3];
                 txId = null;
             } else {
+                requestsId = line[2],
                 txSource = line[3];
                 txType = line[4];
                 txId = parseInt(line[5]);

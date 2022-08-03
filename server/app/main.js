@@ -114,8 +114,9 @@ app.delete('/trace/:traceId', async (req, res)=> {
 }) 
 
 app.post('/trace/:traceName?', async (req, res)=> {
-    let traceName = req.params.traceName ? req.params.traceName : new Date().toLocaleString();
+    let traceName = req.params.traceName ? req.params.traceName :new Date().toLocaleString('en-KR', {timeZone: 'Asia/Seoul'});
     var connection;
+    console.log('traceName', traceName)
     try {
         connection = await createConn()
 

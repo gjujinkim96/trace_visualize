@@ -408,7 +408,7 @@
                 .html('&times;')
                 .classed('closebtn', true)
 
-            var stmtDefault = 'select * from tx order by gen';
+            var stmtDefault = 'select * from tx order by fin';
             let inp = topBar.append('textarea')
                 .style('display', 'inline-block')
                 .attr('placeholder', stmtDefault)
@@ -454,7 +454,7 @@
         }
 
         async function onTargetClick() {
-            let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A where A.gen <= tx.fin and tx.gen <= A.fin order by tx.gen, tx.requestsId, tx.txId, tx.fin`
+            let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A where A.gen <= tx.fin and tx.gen <= A.fin order by tx.fin, tx.gen, tx.requestsId, tx.txId`
 
             console.log('STMT', stmt)
 

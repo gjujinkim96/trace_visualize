@@ -189,13 +189,47 @@
                 .classed('barRect', true)
                 .attr('fill', getBarRectColor)
                 .attr("clip-path","url(#clippy)")  
+                .on('mouseover', function (event, d) {
+                    tooltip.text(`service time: ${(d.fin-d.gen).toLocaleString()}us`)
+                    return tooltip.style("visibility", "visible");
+                })
+                .on('mousemove', function (e) {
+                    return tooltip.style("top", (e.pageY-10)+"px").style("left",(e.pageX+10)+"px");
+                })
+                .on('mouseout', function(e) {
+                    return tooltip.style("visibility", "hidden");
+                })
         }
+
+        var tooltip = d3.select("body")
+            .append("div")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden")
+            .style("background", "#87CEEB66")
+            .style('fill-opacity', 0.4)
+            .text("a simple tooltip");
+
 
         function updateXBarRect() {
             d3.selectAll('barRect')
                 .attr('x', barRectX)
                 .attr('width', barRectWidth)
-        }
+                .on('mouseover', function (event, d) {
+                    tooltip.text(`service time: ${d.fin-d.gen}us`)
+                    return tooltip.style("visibility", "visible");
+                })
+                .on('mouseover', function (event, d) {
+                    tooltip.text((d.fin-d.gen).toLocaleString())
+                    return tooltip.style("visibility", "visible");
+                })
+                .on('mousemove', function (e) {
+                    return tooltip.style("top", (e.pageY-10)+"px").style("left",(e.pageX+10)+"px");
+                })
+                .on('mouseout', function(e) {
+                    return tooltip.style("visibility", "hidden");
+                })
+            }
 
         let targetRectX = ()=>x2(xSize[0]-getLen(x2.domain())*(1+1/2) *infoOffset);
         let targetRectWidth = ()=>x2(getLen(x2.domain()) * infoOffset/2)-x2(0)

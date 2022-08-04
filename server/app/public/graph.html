@@ -20,6 +20,11 @@
         fill-opacity: 0.5;
     }
 
+    .sourceRect {
+        /* stroke: black; */
+        /* stroke-width: 1; */
+    }
+
     .typeRect {
         /* stroke: black; */
     }
@@ -31,6 +36,10 @@
     .legendText {
         fill-opacity: 0.8;
         font-size: 15px;
+    }
+
+    .infoAxis {
+        dx: 5px;
     }
 
     .legendTitle {
@@ -80,7 +89,7 @@
             yGridAxis.tickValues(gridValues.slice(...curYDomainIndex))
             
             let apprxYCnt = getLen(y2.domain()) / (barHeight+barMargin)
-            let gridWidth = width;
+            let gridWidth = width+totalInfoWidth;
             if (apprxYCnt >= 50) {
                 gridWidth = 0;
             }
@@ -88,10 +97,16 @@
             yGridG.call(yGridAxis);
 
             plotArea.select('.graphTop').remove()
+            plotArea.select('.infoG').remove()
             topG = plotArea.append('g')
-                .classed('graphTop', true);
+                .classed('graphTop', true)
+                .attr("transform", "translate("+[totalInfoWidth, 0]+")")
 
-            drawBars(topG, txs)
+            infoG = plotArea.insert('g', '.yAxis')
+                .classed('infoG', true)
+                .attr("clip-path","url(#clippy)") 
+
+            drawBars(topG, infoG, txs)
         }
 
         function updateXAxis(event) {
@@ -99,8 +114,6 @@
             xAxisG.call(xAxis.scale(x2));  
 
             updateXBackroundRect()
-            updateXSourceRect()
-            updateXTypeRect()
             updateXTargetRect()
             updateXBarRect()
         }
@@ -110,6 +123,45 @@
                 Math.max(Math.ceil((y2.domain()[0] - barHeight/2)/(barHeight+barMargin)), 0),
                 Math.ceil((y2.domain()[1] - barHeight/2)/(barHeight+barMargin))
             ]
+        }
+
+        function drawInfoCols(root, txs) {
+            let infoColG = root.selectAll(null)
+                .data(txs.slice(...curYDomainIndex))
+                .enter()
+                .append('g')
+
+            infoColG.append('rect')
+                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
+                .attr('width', infoWidth)
+                .attr('height', y2(barHeight+barMargin) - y2(0))
+                .attr('fill', d=>sourceColors[d.txSource])
+                .attr('stroke', d=>sourceColors[d.txSource])
+                .classed('sourceRect', true)
+                .attr("clip-path","url(#clippy)")
+
+            infoColG.append('rect')
+                .attr('x', infoWidth)
+                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
+                .attr('width', infoWidth)
+                .attr('height', y2(barHeight+barMargin) - y2(0))
+                .attr('fill', d=>typeColors[d.txType])
+                .attr('stroke', d=>typeColors[d.txType])
+                .classed('typeRect', true)
+                .attr("clip-path","url(#clippy)")
+
+            root.append('rect')
+                .attr('width', infoWidth)
+                .attr('height', height)
+                .attr('fill', 'none')
+                .attr('stroke', 'black')
+
+            root.append('rect')
+                .attr('x', infoWidth)
+                .attr('width', infoWidth)
+                .attr('height', height)
+                .attr('fill', 'none')
+                .attr('stroke', 'black')
         }
 
         function drawBarsGroup(root, txs) {
@@ -136,46 +188,6 @@
             d3.selectAll('backgroundRect')
                 .attr('x', backgroundRectX())
                 .attr('width', backgroundRectWidth())
-        }
-
-        let sourceRectX = ()=>x2(xSize[0]-getLen(x2.domain()) * 2*infoOffset)
-        let sourceRectWidth = ()=>x2(getLen(x2.domain()) * infoOffset/2)-x2(0)
-        function drawSourceRect(root) {
-            return root.append('rect')
-                .attr('x', sourceRectX())
-                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
-                .attr('width', sourceRectWidth())
-                .attr('height', y2(barHeight+barMargin) - y2(0))
-                .attr('fill', d=>sourceColors[d.txSource])
-                .attr('stroke', d=>sourceColors[d.txSource])
-                .classed('sourceRect', true)
-                .attr("clip-path","url(#clippy)")
-        }
-
-        function updateXSourceRect() {
-            d3.selectAll('sourceRect')
-                .attr('x', sourceRectX())
-                .attr('width', sourceRectWidth())
-        }
-
-        let typeRectX = ()=>x2(xSize[0]-getLen(x2.domain()) * infoOffset);
-        let typeRectWidth = ()=>x2(getLen(x2.domain()) * infoOffset/2)-x2(0)
-        function drawTypeRect(root) {
-            return root.append('rect')
-                .attr('x', typeRectX)
-                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
-                .attr('width', typeRectWidth())
-                .attr('height', y2(barHeight+barMargin) - y2(0))
-                .attr('fill', d=>typeColors[d.txType])
-                .attr('stroke', d=>typeColors[d.txType])
-                .classed('typeRect', true)
-                .attr("clip-path","url(#clippy)")
-        }
-
-        function updateXTypeRect() {
-            d3.selectAll('typeRect')
-                .attr('x', typeRectX())
-                .attr('width', typeRectWidth())
         }
 
         let barRectX = d=>x2(d.gen);
@@ -257,13 +269,14 @@
                 .attr('width', barRectWidth)
         }
 
-        function drawBars(root, txs) {
+        function drawBars(root, infoG, txs) {
             let barsG = drawBarsGroup(root, txs)
             drawBackgroundRect(barsG)
-            drawSourceRect(barsG)
-            drawTypeRect(barsG)
+            
             drawXTargetRect(barsG)
             drawBarRect(barsG)
+
+            drawInfoCols(infoG, txs);
         }
 
         function getLen(d) {
@@ -354,7 +367,7 @@
 
         function drawLegends(root, needTarget) {
             let legendG = root.append('g')
-                .attr("transform","translate("+[width + padding.left+10, 50]+")")
+                .attr("transform","translate("+[width + totalInfoWidth + padding.left+10, 50]+")")
                 .classed('legends', true)
 
             let sourceLegendG = legendG.append('g')
@@ -384,7 +397,7 @@
         function getXScale() {
             return d3.scaleLinear()
                 .range([0, width])
-                .domain([xSize[0]-getLen(xSize)*infoOffset*2.5, xSize[1]]);
+                .domain([xSize[0], xSize[1]]);
         }
 
         function getYScale() {
@@ -420,8 +433,10 @@
         const barMargin = 4;
         const infoOffset = 0.08;  
 
+        let infoWidth = 30;
+        let totalInfoWidth = 2 * infoWidth;
 
-        const width = window.innerWidth - padding.right - padding.left - margin.w;
+        const width = window.innerWidth - padding.right - padding.left - margin.w - totalInfoWidth;
         const height = window.innerHeight - padding.top - padding.bottom - margin.h;
 
         let url = new URL(window.location.href)
@@ -513,7 +528,7 @@
             
         const svg = body
             .append('svg')
-            .attr("width", width + padding.right + padding.left)
+            .attr("width", width + padding.right + padding.left + totalInfoWidth)
             .attr("height", height + padding.top + padding.bottom)
         
         const plotArea = svg.append("g")
@@ -524,17 +539,17 @@
             .append("clipPath")
             .attr("id", "clippy")
             .append("rect")
-            .attr("width",width)
+            .attr("width",width+totalInfoWidth)
             .attr("height",height)
             .attr("fill","none")
-
 
         var x, x2, xSize, xAxis, 
             y, y2, yAxis,
             curYDomainIndex, gridValues, tickValues, seenOrder,
-            yGridAxis, topG;
+            yGridAxis, topG, infoG;
 
         const xAxisG = plotArea.append('g')
+            .attr("transform","translate("+[totalInfoWidth, 0]+")")
             .classed('xAxis', true)
 
         const yAxisG = plotArea.append("g")
@@ -542,7 +557,19 @@
 
         const yGridG = plotArea.append('g')
             .classed('yGrid', true)
-            .attr("clip-path","url(#clippy)") 
+            .attr("clip-path","url(#clippy)")
+            
+        const infoAxis = plotArea.append('g')
+            .classed('infoAxis', true)
+            .selectAll(null)
+            .data(['S', 'T'])
+            .enter()
+            .append('text')
+            .text(d=>d)
+            .attr('x', (d, i)=>i*infoWidth+infoWidth/2)
+            .attr('dx', '-0.3em')
+            .attr('dy', '-0.15em')
+
 
         function updateByNewData(txs) {
             console.log(`Total transactions: ${txs.length}`)
@@ -583,15 +610,21 @@
             yAxisG.call(yAxis)
 
             plotArea.select('.graphTop').remove()
+            plotArea.select('.infoG').remove()
             topG = plotArea.append('g')
-                .classed('graphTop', true);
+                .classed('graphTop', true)
+                .attr("transform", "translate("+[totalInfoWidth, 0]+")")
+
+            infoG = plotArea.insert('g', '.yAxis')
+                .classed('infoG', true)
+                .attr("clip-path","url(#clippy)")
                 
-            drawBars(topG, txs)      
+            drawBars(topG, infoG, txs)      
             
 
             gridValues = txs.map(e=> e.order * (barHeight+barMargin)-barMargin/2);
             yGridAxis = d3.axisRight(y2)
-                .tickSize(width, 0)
+                .tickSize(width+totalInfoWidth, 0)
                 .tickFormat("")
                 .tickValues(gridValues.slice(...curYDomainIndex))
 

@@ -197,7 +197,9 @@
                 .attr('fill', getBarRectColor)
                 .attr("clip-path","url(#clippy)")  
                 .on('mouseover', function (event, d) {
-                    tooltip.text(`service time: ${(d.fin-d.gen).toLocaleString()}us`)
+                    tooltip.select('.service').text(`service time: ${(d.fin-d.gen).toLocaleString()}us`)
+                    tooltip.select('.start').text(`start: ${d.gen.toLocaleString()}us`)
+                    tooltip.select('.end').text(`end: ${d.fin.toLocaleString()}us`)
                     return tooltip.style("visibility", "visible");
                 })
                 .on('mousemove', function (e) {
@@ -215,19 +217,22 @@
             .style('padding', "2px")
             .style("visibility", "hidden")
             .style("background", "#87CEEBe6")
-            .text("a simple tooltip");
 
+        tooltip.append('text').classed('service', true)
+        tooltip.append('br')
+        tooltip.append('text').classed('start', true)
+        tooltip.append('br')
+        tooltip.append('text').classed('end', true)
 
         function updateXBarRect() {
             d3.selectAll('.barRect')
                 .attr('x', barRectX)
                 .attr('width', barRectWidth)
                 .on('mouseover', function (event, d) {
-                    tooltip.text(`service time: ${d.fin-d.gen}us`)
-                    return tooltip.style("visibility", "visible");
-                })
-                .on('mouseover', function (event, d) {
-                    tooltip.text((d.fin-d.gen).toLocaleString())
+                    tooltip.select('.service').text(`service time: ${(d.fin-d.gen).toLocaleString()}us`)
+                    tooltip.select('.start').text(`start: ${d.gen.toLocaleString()}us`)
+                    tooltip.select('.end').text(`end: ${d.fin.toLocaleString()}us`)
+  
                     return tooltip.style("visibility", "visible");
                 })
                 .on('mousemove', function (e) {

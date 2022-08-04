@@ -144,16 +144,18 @@
                 .attr('stroke', d=>typeColors[d.txType])
                 .classed('typeRect', true)
 
+            let infoH = Math.min(height, y2(txs.length* (barHeight+barMargin)-barMargin/2) - y2(0))
+            console.log(infoH)
             root.append('rect')
                 .attr('width', infoWidth)
-                .attr('height', height)
+                .attr('height', infoH)
                 .attr('fill', 'none')
                 .attr('stroke', 'black')
 
             root.append('rect')
                 .attr('x', infoWidth)
                 .attr('width', infoWidth)
-                .attr('height', height)
+                .attr('height', infoH)
                 .attr('fill', 'none')
                 .attr('stroke', 'black')
         }

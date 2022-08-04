@@ -497,7 +497,6 @@
             if (result.ok) {
                 let data = await result.json()
                 info.text(`Total ${data.length} transactions`)
-                console.log(data[0])
                 updateByNewData(data)
             } else {
                 let alertDiv = d3.select('.alert')
@@ -521,7 +520,6 @@
             if (result.ok) {
                 let data = await result.json()
                 info.text(`Total ${data.length} transactions`)
-                console.log(data[0])
                 updateByNewData(data)
             } else {
                 console.log('What')
@@ -640,10 +638,21 @@
             let isTarget = txs.length > 0 && 'target' in txs[0]
             drawLegends(svg, isTarget)
 
+            
+            let xDomain = x.domain();
+            let xRange = x.range();
+            let moveRate = (xDomain[1]-xDomain[0]) / (xRange[1]-xRange[0]);
+            let minExtent = -xDomain[0] / moveRate;
             const zoom = d3.zoom()
+                .translateExtent([[minExtent, 0], [100000, 100000]])
                 .on("zoom", function(event) {
                     updateYAxis(event, txs);
                     updateXAxis(event);
+
+                    let rg = x.range()
+                    let xd = x.domain()
+                    let xd2 = x2.domain()
+                    let a = xd2[0]-x.domain()[0]
                 })
 
             let zoomObj = svg.call(zoom);

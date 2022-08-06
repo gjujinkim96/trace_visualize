@@ -69,6 +69,7 @@
         visibility: hidden;
         background: #87CEEBe6;
     }
+
 </style>
 <body style="background-color: #A3CCBE">
     <div id="tooltip">
@@ -424,41 +425,45 @@
         let target = url.searchParams.get('target')
 
         const body = d3.select("body");
-        const topBar = body.append('div');
+        const topBar = body.append('div')
+            .attr('id', 'topBar')
+
+        const stmtDefault = 'select * from tx order by fin';
+        const queryArea = topBar.append('textarea')
+                .style('display', 'inline-block')
+                .attr('placeholder', stmtDefault)
+                .attr('id', 'queryArea')
 
         const sqlSubmit = topBar.append('button')
             .attr('id', 'sqlSubmit')
+
+        const info = topBar.append('text')
+            .attr('id', 'info')
+            .text('Total 0 transactions')
 
         if (!target) {
             const alertDiv = body.append('div')
                 .text('Wrong Sql')
                 .style('display', 'none')
                 .classed('alert', true)
+
             const xButton = alertDiv.append('span')
                 .attr('onclick', "this.parentElement.style.display='none';")
                 .html('&times;')
                 .classed('closebtn', true)
 
-            var stmtDefault = 'select * from tx order by fin';
-            let inp = topBar.append('textarea')
-                .style('display', 'inline-block')
-                .attr('placeholder', stmtDefault)
-                .classed('queryArea', true)
-            
             sqlSubmit.text('click')
                 .style('display', 'inline-block')
                 .on('click', onclick)
         } else {
+            queryArea.style('display', 'none')
             sqlSubmit.style('display', 'none')
                 .on('click', onTargetClick);
+            info.style('display', 'none')
         }
 
-        let info = topBar.append('text')
-            .attr('id', 'info')
-            .text('Total 0 transactions')
-
         async function onclick() {
-            let stmt = d3.select('.queryArea').node().value;
+            let stmt = d3.select('#queryArea').node().value;
 
             if (!stmt) {
                 stmt = stmtDefault;

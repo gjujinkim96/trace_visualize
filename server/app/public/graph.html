@@ -11,7 +11,7 @@
         stroke-opacity: 0.8;
     }
 
-    .yGrid {
+    #yGridG {
         opacity: 0.4;
         stroke-dasharray: 4 8; 
     }
@@ -26,15 +26,6 @@
         stroke-width: 2px;  
     }
 
-    .sourceRect {
-        /* stroke: black; */
-        /* stroke-width: 1; */
-    }
-
-    .typeRect {
-        /* stroke: black; */
-    }
-
     .legendRect {
         stroke: black;
     }
@@ -42,10 +33,6 @@
     .legendText {
         fill-opacity: 0.8;
         font-size: 15px;
-    }
-
-    .infoAxis {
-        dx: 5px;
     }
 
     .legendTitle {
@@ -74,225 +61,225 @@
         cursor: pointer;
         transition: 0.3s;
     }
+
+    #tooltip {
+        position: absolute;
+        z-index: 10;
+        padding: 2px;
+        visibility: hidden;
+        background: #87CEEBe6;
+    }
 </style>
 <body style="background-color: #A3CCBE">
+    <div id="tooltip">
+        <text id="service"></text>
+        <br>
+        <text id="start"></text>
+        <br>
+        <text id="end"></text>
+        <br>
+    </div>
+
     <script>
         /* 
          * FUNCTIONS
          *
          */
 
-        function updateYAxis(event, txs) {     
-            y2 = event.transform.rescaleY(y);
-            yAxis.scale(y2);
-            yGridAxis.scale(y2);
+        function updateGraph(event, txs) {     
+            globalThis.yAxis.y2 = event.transform.rescaleY(globalThis.yAxis.y);
+            globalThis.yAxis.self.scale(globalThis.yAxis.y2);
+            globalThis.yGridAxis.self.scale(globalThis.yAxis.y2);
 
-            curYDomainIndex = getCurYDomainIndex()
+            globalThis.yAxis.self.tickValues(globalThis.yAxis.tickValues.slice(...globalThis.yAxis.domainIndex(true)))
+            d3.select('#yAxisG').call(globalThis.yAxis.self)
 
-            yAxis.tickValues(tickValues.slice(...curYDomainIndex))
-            yAxisG.call(yAxis)
-
-            yGridAxis.tickValues(gridValues.slice(...curYDomainIndex))
+            globalThis.yGridAxis.self.tickValues(globalThis.yGridAxis.gridValues.slice(...globalThis.yAxis.domainIndex()))
             
-            let apprxYCnt = getLen(y2.domain()) / (barHeight+barMargin)
+            let apprxYCnt = getLen(globalThis.yAxis.y2.domain()) / (barHeight+barMargin)
             let gridWidth = width+totalInfoWidth;
             if (apprxYCnt >= 50) {
                 gridWidth = 0;
             }
-            yGridAxis.tickSize(gridWidth, 0);
-            yGridG.call(yGridAxis);
+            globalThis.yGridAxis.self.tickSize(gridWidth, 0);
+            d3.select('#yGridG').call(globalThis.yGridAxis.self);
 
-            drawBars(plotArea, txs)
+            globalThis.xAxis.x2 = event.transform.rescaleX(globalThis.xAxis.x);
+            d3.select('#xAxisG').call(globalThis.xAxis.self.scale(globalThis.xAxis.x2)); 
+
+            drawBars(txs)
         }
 
-        function updateXAxis(event) {
-            x2 = event.transform.rescaleX(x);
-            xAxisG.call(xAxis.scale(x2));  
-
-            updateXBackroundRect()
-            updateXTargetRect()
-            updateXBarRect()
-        }
-
-        function getCurYDomainIndex() {
-            return [
-                Math.max(Math.ceil((y2.domain()[0] - barHeight/2)/(barHeight+barMargin)), 0),
-                Math.ceil((y2.domain()[1] - barHeight/2)/(barHeight+barMargin))
-            ]
-        }
-
-        function drawInfoCols(root, txs) {
-            let infoColG = root.selectAll(null)
-                .data(txs.slice(...curYDomainIndex))
-                .enter()
-                .append('g')
-
-            infoColG.append('rect')
-                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
+        function drawInfoCols(root) {
+            let sourceInfoRect = root.append('rect')
                 .attr('width', infoWidth)
-                .attr('height', y2(barHeight+barMargin) - y2(0))
-                .attr('fill', d=>sourceColors[d.txSource])
-                .attr('stroke', d=>sourceColors[d.txSource])
-                .classed('sourceRect', true)
+                .classed('sourceInfoRect', true)
+            updateSourceInfo(sourceInfoRect)
 
-            infoColG.append('rect')
+            let typeInfoRect = root.append('rect')
                 .attr('x', infoWidth)
-                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
                 .attr('width', infoWidth)
-                .attr('height', y2(barHeight+barMargin) - y2(0))
+                .classed('typeInfoRect', true)
+            updateTypeInfo(typeInfoRect)
+        }
+
+        function updateInfoCols(update) {
+            updateSourceInfo(update.select('.sourceInfoRect'))
+            updateTypeInfo(update.select('.typeInfoRect'))
+        }
+
+        function updateSourceInfo(update) {
+            return update.attr('y', d=>globalThis.yAxis.y2(d.order * (barHeight+barMargin)-barMargin/2))
+                .attr('height', globalThis.yAxis.y2(barHeight+barMargin) - globalThis.yAxis.y2(0))
+                .attr('fill', d=>sourceColors[d.txSource])
+                .attr('stroke', d=>sourceColors[d.txSource]);
+        }
+
+        function updateTypeInfo(update) {
+            return update.attr('y', d=>globalThis.yAxis.y2(d.order * (barHeight+barMargin)-barMargin/2))
+                .attr('height', globalThis.yAxis.y2(barHeight+barMargin) - globalThis.yAxis.y2(0))
                 .attr('fill', d=>typeColors[d.txType])
                 .attr('stroke', d=>typeColors[d.txType])
-                .classed('typeRect', true)
-
-            let infoH = Math.min(height, y2(txs.length* (barHeight+barMargin)-barMargin/2) - y2(0))
-            console.log(infoH)
-            root.append('rect')
-                .attr('width', infoWidth)
-                .attr('height', infoH)
-                .attr('fill', 'none')
-                .attr('stroke', 'black')
-
-            root.append('rect')
-                .attr('x', infoWidth)
-                .attr('width', infoWidth)
-                .attr('height', infoH)
-                .attr('fill', 'none')
-                .attr('stroke', 'black')
         }
 
-        function drawBarsGroup(root, usingTxs) {
-            return root.append('g')
-                .classed('barsG', true)
-                .selectAll(null)
-                .data(usingTxs)
-                .enter()
-                .append('g')
-        }
-
-        let backgroundRectX = ()=>x2(xSize[0])
-        let backgroundRectWidth = ()=>x2(xSize[1])-x2(xSize[0])
         function drawBackgroundRect(root) {
-            return root.append('rect')
-                .attr('x', backgroundRectX())
-                .attr('y', d=>y2(d.order * (barHeight+barMargin)-barMargin/2))
-                .attr('width', backgroundRectWidth())
-                .attr('height', y2(barHeight+barMargin) - y2(0))
+            let newRect = root.append('rect')
                 .classed('backgroundRect', true)
-                .attr('fill', d=>getBackGroundColor(d))
+            updateBackgroundRect(newRect)
+            return newRect
         }
 
-        function updateXBackroundRect() {
-            d3.selectAll('.backgroundRect')
-                .attr('x', backgroundRectX())
-                .attr('width', backgroundRectWidth())
+        function updateBackgroundRectX(update) {
+            return update.attr('x', globalThis.xAxis.x2(globalThis.xAxis.range.lower))
+                .attr('width', globalThis.xAxis.x2(globalThis.xAxis.range.upper)-globalThis.xAxis.x2(globalThis.xAxis.range.lower))
         }
 
-        let barRectX = d=>x2(d.gen);
-        let barRectWidth = d=>x2(d.fin)-x2(d.gen)
+        function updateBackgroundRectY(update) {
+            return update.attr('y', (d, i)=>{
+                return globalThis.yAxis.y2(d.order * (barHeight+barMargin)-barMargin/2)
+            })
+                .attr('height', globalThis.yAxis.y2(barHeight+barMargin) - globalThis.yAxis.y2(0))
+        }
+
+        function updateBackgroundRect(update) {
+            updateBackgroundRectX(update)
+            updateBackgroundRectY(update)
+            return update.attr('fill', d=>{
+                return getBackGroundColor(d)
+            })
+        }
+
+
+        function updateBarRectX(update) {
+            return update.attr('x', d=>globalThis.xAxis.x2(d.gen))
+                .attr('width', d=>globalThis.xAxis.x2(d.fin)-globalThis.xAxis.x2(d.gen))
+        }
+
+        function updateBarRectY(update) {
+            return update.attr('y', d=> globalThis.yAxis.y2(d.order * (barHeight+barMargin)))
+                .attr('height', globalThis.yAxis.y2(barHeight)-globalThis.yAxis.y2(0))
+        }
+
+        function updateBarRect(update) {
+            updateBarRectX(update)
+            updateBarRectY(update)
+            updateHoverTooltip(update)
+            return update.attr('fill', getBarRectColor)
+        }
+
+        function updateHoverTooltip(update) {
+            update.on('mouseover', null)
+                .on('mousemove', null)
+                .on('mouseout', null)
+
+            return update.on('mouseover', function (event, d) {
+                let tooltip = d3.select('#tooltip')
+                tooltip.select('#service').text(`service time: ${(d.fin-d.gen).toLocaleString()}us`)
+                tooltip.select('#start').text(`start: ${d.gen.toLocaleString()}us`)
+                tooltip.select('#end').text(`end: ${d.fin.toLocaleString()}us`)
+                return tooltip.style("visibility", "visible");
+            })
+                .on('mousemove', function (e) {
+                return d3.select('#tooltip').style("top", (e.pageY-10)+"px").style("left",(e.pageX+10)+"px");
+            })
+                .on('mouseout', function(e) {
+                return d3.select('#tooltip').style("visibility", "hidden");
+            })
+        }
+
         function drawBarRect(root) {
-            return root.append('rect')
-                .attr('x', barRectX)
-                .attr('y', d=> y2(d.order * (barHeight+barMargin)))
-                .attr('width', barRectWidth)
-                .attr('height', y2(barHeight)-y2(0))
+            let newRect = root.append('rect')
                 .classed('barRect', true)
-                .attr('fill', getBarRectColor)
                 .attr("clip-path","url(#clippy)")  
-                .on('mouseover', function (event, d) {
-                    tooltip.select('.service').text(`service time: ${(d.fin-d.gen).toLocaleString()}us`)
-                    tooltip.select('.start').text(`start: ${d.gen.toLocaleString()}us`)
-                    tooltip.select('.end').text(`end: ${d.fin.toLocaleString()}us`)
-                    return tooltip.style("visibility", "visible");
-                })
-                .on('mousemove', function (e) {
-                    return tooltip.style("top", (e.pageY-10)+"px").style("left",(e.pageX+10)+"px");
-                })
-                .on('mouseout', function(e) {
-                    return tooltip.style("visibility", "hidden");
-                })
+
+            return updateBarRect(newRect)
         }
 
-        var tooltip = d3.select("body")
-            .append("div")
-            .style("position", "absolute")
-            .style("z-index", "10")
-            .style('padding', "2px")
-            .style("visibility", "hidden")
-            .style("background", "#87CEEBe6")
 
-        tooltip.append('text').classed('service', true)
-        tooltip.append('br')
-        tooltip.append('text').classed('start', true)
-        tooltip.append('br')
-        tooltip.append('text').classed('end', true)
-
-        function updateXBarRect() {
-            d3.selectAll('.barRect')
-                .attr('x', barRectX)
-                .attr('width', barRectWidth)
-                .on('mouseover', function (event, d) {
-                    tooltip.select('.service').text(`service time: ${(d.fin-d.gen).toLocaleString()}us`)
-                    tooltip.select('.start').text(`start: ${d.gen.toLocaleString()}us`)
-                    tooltip.select('.end').text(`end: ${d.fin.toLocaleString()}us`)
-  
-                    return tooltip.style("visibility", "visible");
-                })
-                .on('mousemove', function (e) {
-                    return tooltip.style("top", (e.pageY-10)+"px").style("left",(e.pageX+10)+"px");
-                })
-                .on('mouseout', function(e) {
-                    return tooltip.style("visibility", "hidden");
-                })
-            }
-
-        
-        let targetRectWidth = ()=>x2(xSize[1])+totalInfoWidth
-        function drawXTargetRect(root, data) {
-            if (data.length > 0 && 'target' in data[0]) {
-                let targetPos = data.map(d=>d.target).indexOf(1);
+        function updateTargetRect(update, txs) {
+            if (txs.length > 0 && 'target' in txs[0]) {
+                let targetPos = txs.map(d=>d.target).indexOf(1);
                 if (targetPos != -1) {
-                    root.append('rect')
-                        .attr('y', d=>y2(data[targetPos].order * (barHeight+barMargin)-barMargin/2))
-                        .attr('width', targetRectWidth())
-                        .attr('height', y2(barHeight+barMargin) - y2(0))
-                        .classed('targetRect', true)
-                        .attr("clip-path","url(#clippy)")
+                    return update.attr('y', d=>globalThis.yAxis.y2(txs[targetPos].order * (barHeight+barMargin)-barMargin/2))
+                        .attr('width', globalThis.xAxis.x2(globalThis.xAxis.range.upper)+totalInfoWidth)
+                        .attr('height', globalThis.yAxis.y2(barHeight+barMargin) - globalThis.yAxis.y2(0))
+                        .attr('visibility', 'visible')
+                } else {
+                    update.attr('visibility', 'none')
                 }
+            } else {
+                update.attr('visibility', 'none')
             }
         }
 
-        function updateXTargetRect() {
-            d3.selectAll('.targetRect')
-                .attr('width', targetRectWidth())
-        }
 
-        function updateXBarRect() {
-            d3.selectAll('.barRect')
-                .attr('x', barRectX)
-                .attr('width', barRectWidth)
-        }
+        function drawBars(txs) {
+            let drawingBoard = d3.select('#drawingBoard');
+            let graphTop = drawingBoard.select('#graphTop');
+            let infoDrawing = drawingBoard.select('#infoDrawing');
+            
+            let data = txs.slice(...globalThis.yAxis.domainIndex(true))
 
-        function drawBars(root, txs) {
-            root.select('.targetRect').remove()
-            root.select('.graphTop').remove()
-            root.select('.infoG').remove()
-            
-            let topG = plotArea.append('g')
-                .classed('graphTop', true)
-                .attr("transform", "translate("+[totalInfoWidth, 0]+")")
-                .attr("clip-path","url(#clippyjustgraph)")
-            
-            let infoG = plotArea.insert('g', '.yAxis')
-                .classed('infoG', true)
-                .attr("clip-path","url(#clippy)")
+            graphTop.selectAll('.bars')
+                .data(data)
+                .join(
+                    enter => {
+                        let bars = enter.append('g')
+                            .classed('bars', true)
+                        drawBackgroundRect(bars)
+                        drawBarRect(bars)
+                    },
+                    update => {
+                        updateBackgroundRect(update.select('.backgroundRect'))
+                        updateBarRect(update.select('.barRect'));
+                    },
+                    exit => {
+                        exit.remove()
+                    }
+                )
 
-            let data = txs.slice(...curYDomainIndex)
-            let barsG = drawBarsGroup(topG, data)
+            infoDrawing.selectAll('.infoColG')
+                .data(data)
+                .join(
+                    enter => {
+                        let infoColG = enter.append('g')
+                            .classed('infoColG', true)
+                        drawInfoCols(infoColG)
+                    },
+                    update => {
+                        updateInfoCols(update)
+                    },
+                    exit => {
+                        exit.remove()
+                    }
+                )
+
+            let infoH = height;
+            d3.selectAll('.infoBorder')
+                .attr('height', infoH)
             
-            drawBackgroundRect(barsG)
-            drawBarRect(barsG)
-            drawInfoCols(infoG, txs);
-            drawXTargetRect(root, data)
+            let targetRect = drawingBoard.select('.targetRect');
+            updateTargetRect(targetRect, txs)
         }
 
         function getLen(d) {
@@ -325,7 +312,7 @@
                 return sourceColors[d.txSource]
             }
 
-            let idx = seenOrder[d.requestsId] % colors.length;
+            let idx = globalThis.seenOrder[d.requestsId] % colors.length;
             return colors[idx];
         }
 
@@ -381,7 +368,7 @@
                 .classed(className.text, true)
         }
 
-        function drawLegends(root, needTarget) {
+        function drawLegends(root) {
             let legendG = root.append('g')
                 .attr("transform","translate("+[width + totalInfoWidth + padding.left+10, 50]+")")
                 .classed('legends', true)
@@ -401,32 +388,18 @@
                 {rect:'legendRect', text:'legendText', title:'legendTitle'})
         }
 
-        function getXScale() {
-            return d3.scaleLinear()
-                .range([0, width])
-                .domain([xSize[0], xSize[1]]);
-        }
-
-        function getYScale() {
-            const maxBars = Math.floor(height / (barHeight+barMargin));
-
-            return d3.scaleLinear()
-                .range([0, height])
-                .domain([0, maxBars*(barHeight+barMargin)]);
-        }
-
         function getSeenOrder(txs) {
-            const seenOrder = {'CACHE': txs.length, 'GC': txs.length+1, 'MAPPING': txs.length+2};
+            const requestsIdOrder = {'CACHE': txs.length, 'GC': txs.length+1, 'MAPPING': txs.length+2};
             let order = 0;
             
             txs.forEach(function(ele, i) {
-                if (!(ele.requestsId in seenOrder)) {
-                    seenOrder[ele.requestsId] = order;
+                if (!(ele.requestsId in requestsIdOrder)) {
+                    requestsIdOrder[ele.requestsId] = order;
                     order += 1;
                 }
             });
 
-            return seenOrder;
+            return requestsIdOrder;
         }
 
         /*
@@ -452,7 +425,9 @@
 
         const body = d3.select("body");
         const topBar = body.append('div');
-        var b;
+
+        const sqlSubmit = topBar.append('button')
+            .attr('id', 'sqlSubmit')
 
         if (!target) {
             const alertDiv = body.append('div')
@@ -470,17 +445,16 @@
                 .attr('placeholder', stmtDefault)
                 .classed('queryArea', true)
             
-            b = topBar.append('button')
-                .text('click')
+            sqlSubmit.text('click')
                 .style('display', 'inline-block')
                 .on('click', onclick)
         } else {
-            b = topBar.append('button')
-                .style('display', 'none')
+            sqlSubmit.style('display', 'none')
                 .on('click', onTargetClick);
         }
 
         let info = topBar.append('text')
+            .attr('id', 'info')
             .text('Total 0 transactions')
 
         async function onclick() {
@@ -492,10 +466,8 @@
 
             console.log('STMT', stmt)
 
-
-
             let result = await fetch(`${window.location.protocol}//${window.location.host}/tx/${traceId}?sql=${stmt}`)
-
+            let info = d3.select('#info')
             if (result.ok) {
                 let data = await result.json()
                 info.text(`Total ${data.length} transactions`)
@@ -518,7 +490,7 @@
             let fetchUrl = `${window.location.protocol}//${window.location.host}/tx/${traceId}?sql=${stmt}`
             console.log(fetchUrl)
             let result = await fetch(fetchUrl)
-
+            let info = d3.select('#info')
             if (result.ok) {
                 let data = await result.json()
                 info.text(`Total ${data.length} transactions`)
@@ -530,15 +502,19 @@
             }
         }
 
+
             
-        const svg = body
+        const mainSvg = body
             .append('svg')
             .attr("width", width + padding.right + padding.left + totalInfoWidth)
             .attr("height", height + padding.top + padding.bottom)
+            .attr('id', 'mainSvg')
         
-        const plotArea = svg.append("g")
+        const plotArea = mainSvg.append("g")
             .attr("transform","translate("+[padding.left,padding.top]+")")  
-            .classed('plotArea', true)
+            .attr('id', 'plotArea')
+
+        const legends = drawLegends(mainSvg)
 
         const clippingRect = plotArea
             .append("clipPath")
@@ -556,112 +532,171 @@
             .attr("height",height)
             .attr("fill","none")
 
-        var x, x2, xSize, xAxis, 
-            y, y2, yAxis,
-            curYDomainIndex, gridValues, tickValues, seenOrder,
-            yGridAxis, topG, infoG;
+
+        const drawingBoard = plotArea.append('g')
+            .attr('id', 'drawingBoard')
+
+        const topG = drawingBoard.append('g')
+            .attr('id', 'graphTop')
+            .attr("transform", "translate("+[totalInfoWidth, 0]+")")
+            .attr("clip-path","url(#clippyjustgraph)")
+        
+        const infoG = drawingBoard.append('g')
+            .attr('id', 'infoG')
+            .attr("clip-path","url(#clippy)")
+
+        infoG.append('g')
+            .attr('id', 'infoDrawing')
+
+        const infoBorders = infoG.append('g')
+            .attr('id', 'infoBorders')
+
+        infoBorders.append('rect')
+            .attr('width', infoWidth)
+            .classed('infoBorder', true)
+            .attr('fill', 'none')
+            .attr('stroke', 'black')
+
+        infoBorders.append('rect')
+            .attr('x', infoWidth)
+            .classed('infoBorder', true)
+            .attr('width', infoWidth)
+            .attr('fill', 'none')
+            .attr('stroke', 'black')
+
+        const targetRect = drawingBoard.append('rect')
+            .classed('targetRect', true)
+            .attr("clip-path","url(#clippy)")
 
         const xAxisG = plotArea.append('g')
             .attr("transform","translate("+[totalInfoWidth, 0]+")")
-            .classed('xAxis', true)
+            .attr('id', 'xAxisG')
 
         const yAxisG = plotArea.append("g")
-            .classed('yAxis', true)
+            .attr('id', 'yAxisG')
 
         const yGridG = plotArea.append('g')
-            .classed('yGrid', true)
+            .attr('id', 'yGridG')
             .attr("clip-path","url(#clippy)")
             
         const infoAxis = plotArea.append('g')
-            .classed('infoAxis', true)
-            .selectAll(null)
+            .attr('id', 'infoAxis')
+            .selectAll('text')
             .data(['S', 'T'])
-            .enter()
-            .append('text')
-            .text(d=>d)
-            .attr('x', (d, i)=>i*infoWidth+infoWidth/2)
-            .attr('dx', '-0.3em')
-            .attr('dy', '-0.15em')
+            .join(enter=>{
+                enter.append('text')
+                .text(d=>d)
+                .attr('x', (d, i)=>i*infoWidth+infoWidth/2)
+                .attr('dx', '-0.3em')
+                .attr('dy', '-0.15em')
+            })
 
 
         function updateByNewData(txs) {
             console.log(`Total transactions: ${txs.length}`)
-            seenOrder = getSeenOrder(txs)
+            globalThis.seenOrder = getSeenOrder(txs)
             txs.forEach(function(ele, i) {
                 ele.order = i;
             });
 
-            tickValues = txs.map((e, i)=> i * (barHeight+barMargin)+barHeight/2);    
+            // set xAxis
+            {
+                let xr = {
+                    lower: d3.min(txs, d=>d.gen), 
+                    upper: d3.max(txs, d=>d.fin),
+                }
+                xr.bound = [xr.lower, xr.upper]
 
-            xSize = [d3.min(txs, d=>d.gen), d3.max(txs, d=>d.fin)]
-            x = getXScale();
-            x2 = x.copy();
+                let xAx = {
+                    range: xr,
+                    x: d3.scaleLinear()
+                        .range([0, width])
+                        .domain(xr.bound),
+                }
+                xAx.x2 = xAx.x.copy()
+                xAx.self = d3.axisTop(xAx.x2)
 
-            xAxis = d3.axisTop(x2)
-            xAxisG.call(xAxis);
+                globalThis.xAxis = xAx
+            }
 
-            
-            y = getYScale();
-            y2 = y.copy();
-
-            
-            curYDomainIndex = getCurYDomainIndex()
-            
-            yAxis = d3.axisLeft(y2)
-                .tickFormat(function(d){
-                    order = (d-barHeight/2)/(barHeight+barMargin);
-
-                    if (txs[order].txSource === 'USERIO') {
-                        return txs[order].requestsId+'='+txs[order].txId
-                    } else {
-                        return txs[order].txSource;
-                    }
-                    
-                })
-                .tickValues(tickValues.slice(...curYDomainIndex))
-            
-            yAxisG.call(yAxis)
-
-            drawBars(plotArea, txs)  
-            
-
-            gridValues = txs.map(e=> e.order * (barHeight+barMargin)-barMargin/2);
-            yGridAxis = d3.axisRight(y2)
-                .tickSize(width+totalInfoWidth, 0)
-                .tickFormat("")
-                .tickValues(gridValues.slice(...curYDomainIndex))
-
-
-            yGridG.call(yGridAxis)
-
-
-            svg.select('.legends').remove()
-
-            let isTarget = txs.length > 0 && 'target' in txs[0]
-            drawLegends(svg, isTarget)
+            d3.select('#xAxis').call(globalThis.xAxis.self);
 
             
-            let xDomain = x.domain();
-            let xRange = x.range();
+            // set yAxis
+            {
+                const maxBars = Math.floor(height / (barHeight+barMargin));
+
+                let yAx = {
+                    y: d3.scaleLinear()
+                        .range([0, height])
+                        .domain([0, maxBars*(barHeight+barMargin)]),
+                    tickValues: txs.map((e, i)=> i * (barHeight+barMargin)+barHeight/2),
+                    _cacheDomainIndex: null,
+                    domainIndex: function (shouldUpdate) {
+                        if (shouldUpdate || this._cacheDomainIndex === null) {
+                            this._cacheDomainIndex = [
+                                Math.max(Math.ceil((this.y2.domain()[0] - barHeight/2)/(barHeight+barMargin)), 0),
+                                Math.ceil((this.y2.domain()[1] - barHeight/2)/(barHeight+barMargin))
+                            ]
+                        }
+                        return this._cacheDomainIndex;
+                    },
+                }
+                yAx.y2 = yAx.y.copy()
+                yAx.self = d3.axisLeft(yAx.y2)
+                    .tickFormat(function(d){
+                        order = (d-barHeight/2)/(barHeight+barMargin);
+
+                        if (txs[order].txSource === 'USERIO') {
+                            return txs[order].requestsId+'='+txs[order].txId
+                        } else {
+                            return txs[order].txSource;
+                        }                        
+                    })
+                    .tickValues(yAx.tickValues.slice(...yAx.domainIndex()))
+
+                globalThis.yAxis = yAx
+            }
+            
+            d3.select('#yAxisG').call(globalThis.yAxis.self)
+
+            // draw bars
+            drawBars(txs)  
+            
+
+
+            {
+                let gridV = txs.map(e=> e.order * (barHeight+barMargin)-barMargin/2);
+                let yGridAx = {
+                    gridValues: gridV
+                }
+
+                yGridAx.self = d3.axisRight(globalThis.yAxis.y2)
+                    .tickSize(width+totalInfoWidth, 0)
+                    .tickFormat("")
+                    .tickValues(yGridAx.gridValues.slice(...globalThis.yAxis.domainIndex()))
+                globalThis.yGridAxis = yGridAx
+            }
+
+            //draw grids
+            d3.select('#yGridG').call(globalThis.yGridAxis.self)
+
+            // handle zoom
+            let xDomain = globalThis.xAxis.x.domain();
+            let xRange = globalThis.xAxis.x.range();
             let moveRate = (xDomain[1]-xDomain[0]) / (xRange[1]-xRange[0]);
             let minExtent = -xDomain[0] / moveRate;
             const zoom = d3.zoom()
                 .translateExtent([[minExtent, 0], [100000, 100000]])
                 .on("zoom", function(event) {
-                    updateYAxis(event, txs);
-                    updateXAxis(event);
-
-                    let rg = x.range()
-                    let xd = x.domain()
-                    let xd2 = x2.domain()
-                    let a = xd2[0]-x.domain()[0]
+                    updateGraph(event, txs);
                 })
 
-            let zoomObj = svg.call(zoom);
+            let zoomObj = d3.select('#mainSvg').call(zoom);
             zoomObj.call(zoom.transform, d3.zoomIdentity)
         }
 
-        b.node().click();
+        d3.select('#sqlSubmit').node().click()
     </script>
 </body>
 </html>

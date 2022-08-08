@@ -17,6 +17,8 @@ CREATE TABLE tx
         traceId INT,
         requestsId TEXT, 
         gen INT NOT NULL,
+        wait INT NOT NULL,
+        sch INT NOT NULL,
         fin INT NOT NULL,
         txSource TEXT NOT NULL, 
         txType TEXT NOT NULL,

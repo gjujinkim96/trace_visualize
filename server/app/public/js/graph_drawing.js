@@ -15,6 +15,8 @@ const targetColor = {
     'O': 'red'
 }
 
+const waitColor = 'darkslategray'
+
 function getBackGroundColor(d) {
     if (d.txSource != 'USERIO') {
         return sourceColors[d.txSource]
@@ -166,6 +168,15 @@ function updateBarRect(update, style) {
     return update.attr('fill', getBarRectColor)
 }
 
+function updateWaitRect(update, style) {
+    update.attr('x', d => globalThis.xAxis.x2(d.wait))
+        .attr('width', d => globalThis.xAxis.x2(d.sch) - globalThis.xAxis.x2(d.wait))
+        .attr('y', d => globalThis.yAxis.y2(d.order * style.bar.cellH))
+        .attr('height', globalThis.yAxis.y2(style.bar.h) - globalThis.yAxis.y2(0))
+
+    return update.attr('fill', waitColor)
+}
+
 function updateHoverTooltip(update) {
     update.on('mouseover', null)
         .on('mousemove', null)
@@ -192,6 +203,14 @@ function drawBarRect(root, style) {
         .attr("clip-path", "url(#clippy)")
 
     return updateBarRect(newRect, style)
+}
+
+function drawWaitRect(root, style) {
+    let newRect = root.append('rect')
+        .classed('waitRect', true)
+        .attr("clip-path", "url(#clippy)")
+
+    return updateWaitRect(newRect, style)
 }
 
 
@@ -226,10 +245,12 @@ function drawBars(txs, style) {
                     .classed('bars', true)
                 drawBackgroundRect(bars, style)
                 drawBarRect(bars, style)
+                drawWaitRect(bars, style)
             },
             update => {
                 updateBackgroundRect(update.select('.backgroundRect'), style)
                 updateBarRect(update.select('.barRect'), style);
+                updateWaitRect(update.select('.waitRect'), style)
             },
             exit => {
                 exit.remove()

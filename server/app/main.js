@@ -144,7 +144,6 @@ app.post('/trace/:traceName?', async (req, res)=> {
             }
         }
 
-
         let traceSql = 'INSERT INTO trace (name) VALUES (?)'
         let traceResult = await connection.query(traceSql, [traceName])
         let traceId = traceResult[0].insertId
@@ -156,28 +155,31 @@ app.post('/trace/:traceName?', async (req, res)=> {
         let rows = lines.map(function (v) {
             let line = v.split(',');
             var gen = parseInt(line[0]),
-                fin = parseInt(line[1]),
+                wait = parseInt(line[1]),
+                sch = parseInt(line[2]),
+                fin = parseInt(line[3]),
+
                 requestsId,
                 txSource,
                 txType,
                 txId;
         
-            if (line.length === 4) {
+            if (line.length === 6) {
                 requestsId = null;
-                txSource = line[2];
-                txType = line[3];
+                txSource = line[4];
+                txType = line[5];
                 txId = null;
             } else {
-                requestsId = line[2],
-                txSource = line[3];
-                txType = line[4];
-                txId = parseInt(line[5]);
+                requestsId = line[4],
+                txSource = line[5];
+                txType = line[6];
+                txId = parseInt(line[7]);
             }
 
-            return [traceId, gen, fin, requestsId, txSource, txType, txId]
+            return [traceId, gen, wait, sch, fin, requestsId, txSource, txType, txId]
         })
     
-        let txSql = 'INSERT INTO tx (traceId, gen , fin, requestsId, txSource, txType, txId) VALUES ?'
+        let txSql = 'INSERT INTO tx (traceId, gen, wait, sch, fin, requestsId, txSource, txType, txId) VALUES ?'
         let result = await connection.query(txSql, [rows])
 
         let viewSql = `CREATE VIEW tx_${traceId} AS SELECT * FROM tx WHERE traceId=${traceId}`
@@ -189,6 +191,7 @@ app.post('/trace/:traceName?', async (req, res)=> {
         return res.send(`Inserted ${result[0].affectedRows} txs to trace: ${traceName}`)
     } catch (e) {
         if (connection) {
+            console.log('Rollback')
             await connection.rollback()
         }
         return handleErrorMsg(res, e, 500, 'Something wrong with db.',

@@ -26,14 +26,6 @@ function getBackGroundColor(d) {
     return colors[idx];
 }
 
-function getBarRectColor(d) {
-    if (d.target === 1) {
-        return Object.values(targetColor)[1];
-    } else {
-        return typeColors[d.txType];
-    }
-}
-
 function drawLegend(root, colors, title, className) {
     let arrColors = Object.keys(colors).map(d => [d, colors[d]])
 
@@ -171,7 +163,7 @@ function updateBarRect(update, style) {
         .attr('height', globalThis.yAxis.y2(style.bar.h) - globalThis.yAxis.y2(0))
 
     updateHoverTooltip(update)
-    return update.attr('fill', getBarRectColor)
+    return update.attr('fill', d=>typeColors[d.txType])
 }
 
 function updateWaitRect(update, style) {

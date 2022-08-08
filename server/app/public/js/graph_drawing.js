@@ -87,10 +87,16 @@ function drawLegends(root, style) {
     let typeLegendG = d3.select('#typeLegendG')
         .attr("transform", "translate(" + [0, 100] + ")")
 
+    let delayLegendG = d3.select('#delayLegendG')
+        .attr("transform", "translate(" + [0, 180] + ")")
+
     drawLegend(sourceLegendG, sourceColors, 'Source',
         { rect: 'legendRect', text: 'legendText', title: 'legendTitle' })
 
     drawLegend(typeLegendG, typeColors, 'Type',
+        { rect: 'legendRect', text: 'legendText', title: 'legendTitle' })
+
+    drawLegend(delayLegendG, {'WAIT': waitColor}, 'Wait-Sch',
         { rect: 'legendRect', text: 'legendText', title: 'legendTitle' })
 }
 

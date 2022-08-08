@@ -172,6 +172,7 @@ function updateWaitRect(update, style) {
         .attr('y', d => globalThis.yAxis.y2(d.order * style.bar.cellH))
         .attr('height', globalThis.yAxis.y2(style.bar.h) - globalThis.yAxis.y2(0))
 
+    // updateHoverTooltip(update)
     return update.attr('fill', waitColor)
 }
 
@@ -183,7 +184,10 @@ function updateHoverTooltip(update) {
     return update.on('mouseover', function (event, d) {
         let tooltip = d3.select('#tooltip')
         tooltip.select('#service').text(`service time: ${(d.fin - d.gen).toLocaleString()}us`)
+        tooltip.select('#delay').text(`delay time: ${(d.sch - d.wait).toLocaleString()}us`)
         tooltip.select('#start').text(`start: ${d.gen.toLocaleString()}us`)
+        tooltip.select('#wait').text(`wait: ${d.wait.toLocaleString()}us`)
+        tooltip.select('#sch').text(`sch: ${d.sch.toLocaleString()}us`)
         tooltip.select('#end').text(`end: ${d.fin.toLocaleString()}us`)
         return tooltip.style("visibility", "visible");
     })

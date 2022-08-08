@@ -10,6 +10,11 @@ body {
     stroke-opacity: 0.8;
 }
 
+.waitRect {
+    stroke: black;
+    stroke-opacity: 0.8;
+}
+
 #yGridG {
     opacity: 0.4;
     stroke-dasharray: 4 8; 

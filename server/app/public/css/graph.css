@@ -1,0 +1,80 @@
+
+body {
+    background-color: #A3CCBE;
+}
+
+.barRect {
+    /* fill: orange; */
+    /* fill-opacity: 0.4; */
+    stroke: black;
+    stroke-opacity: 0.8;
+}
+
+#yGridG {
+    opacity: 0.4;
+    stroke-dasharray: 4 8; 
+}
+
+.backgroundRect {
+    fill-opacity: 0.5;
+}
+
+#targetRect {
+    fill: none;
+    stroke: red;
+    stroke-width: 3px;  
+}
+
+.legendRect {
+    stroke: black;
+}
+
+.legendText {
+    fill-opacity: 0.8;
+    font-size: 15px;
+}
+
+.legendTitle {
+    fill-opacity: 0.8;
+    font-size: 18px;
+}
+
+#alert {
+    padding: 20px;
+    background-color: #f44336; /* Red */
+    color: white;
+    /* margin-bottom: 15px; */
+    position:absolute;
+    left: 5px;
+    right: 5px;
+    top: 5px;
+    display: none;
+}
+
+#closebtn {
+    margin-left: 15px;
+    color: white;
+    font-weight: bold;
+    float: right;
+    font-size: 22px;
+    line-height: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#tooltip {
+    position: absolute;
+    z-index: 10;
+    padding: 2px;
+    visibility: hidden;
+    background: #87CEEBe6;
+}
+
+#queryArea {
+    display: inline-block;
+}
+
+.infoBorder {
+    fill: none;
+    stroke: black;
+}

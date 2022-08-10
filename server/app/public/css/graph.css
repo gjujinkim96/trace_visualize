@@ -68,11 +68,33 @@ body {
     transition: 0.3s;
 }
 
+#sqlQuery {
+    float: left;
+}
+
+#options {
+    float:right;
+}
+
+#optionButton {
+    background-image: url('/img/setting-svgrepo-com.svg');
+    background-size: contain;
+    height: 25px;  
+    width: 25px;
+}
+
 #tooltip {
     position: absolute;
     z-index: 10;
     padding: 2px;
     visibility: hidden;
+    background: #87CEEBe6;
+}
+
+
+#menu {
+    visibility: hidden;
+    float: right;
     background: #87CEEBe6;
 }
 
@@ -83,4 +105,85 @@ body {
 .infoBorder {
     fill: none;
     stroke: black;
+}
+
+/* options">
+            <button id="optionButton"></button>
+            <div id="options-content"> */
+
+#options {
+    float:right
+}
+
+#optionButton {
+
+}
+
+#options-content {
+    display: none;
+    z-index: 10;
+    padding: 0;
+    background: #87CEEB;
+    position: absolute;
+    right:0;
+    left: auto;
+    margin-right: 8px;
+}
+
+#options-content ul {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+}
+
+#options-content li{
+    display: block;
+    padding: 10px;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+}
+
+#options-content ul li:hover {
+    background: darkkhaki;
+}
+
+#tooltipOption {
+    z-index: 9;
+    padding: 2px;
+    background: #87CEEBe6;
+    position: absolute;
+    right: 200px;
+    top: 70px;
+    border: 1px solid black;
+    display: none;
+    right: 0;
+    top: 35px;
+
+    margin-right: 8px;
+}
+
+#tooltipOptionTitle {
+    margin: 0;
+    padding: 0;
+}
+
+.tooltipHr {
+    margin: 0;
+    padding: 0;
+    border: 1px solid royalblue;
+}
+
+#tooltipOptionSetter {
+    margin: 3px;
+}
+
+#tooltip {
+    position: absolute;
+    z-index: 10;
+    /* padding: 2px; */
+    visibility: hidden;
+    background: #87CEEBe6;
+    border: 1px solid black;
 }

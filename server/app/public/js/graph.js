@@ -14,6 +14,47 @@ function getSeenOrder(txs) {
     return requestsIdOrder;
 }
 
+// update.on('mouseover', null)
+//         .on('mousemove', null)
+//         .on('mouseout', null)
+
+//     return update.on('mouseover', function (event, d) {
+//         let tooltip = d3.select('#tooltip')
+//         tooltip.select('#service').text(`service time: ${(d.fin - d.gen).toLocaleString()}us`)
+//         tooltip.select('#start').text(`start: ${d.gen.toLocaleString()}us`)
+//         tooltip.select('#end').text(`end: ${d.fin.toLocaleString()}us`)
+//         return tooltip.style("visibility", "visible");
+//     })
+//         .on('mousemove', function (e) {
+//             return d3.select('#tooltip').style("top", (e.pageY - 10) + "px").style("left", (e.pageX + 10) + "px");
+//         })
+//         .on('mouseout', function (e) {
+//             return d3.select('#tooltip').style("visibility", "hidden");
+//         })
+
+function menuClicked() {    
+    const menu = d3.select('#options-content')
+
+    const nextDisplay = menu.style('display') == 'none' ? 'block' : 'none';
+    menu.style('display', nextDisplay)
+}
+
+function outsideClickChecker(e) {
+    if (!document.getElementById('options').contains(e.target)) {
+         d3.select('#options-content').style('display', 'none')
+    }
+
+    if (!(document.getElementById('tooltipOption').contains(e.target) || 
+        document.getElementById('optionTooltip').contains(e.target))) {
+        d3.select('#tooltipOption').style('display', 'none')
+    }
+}
+
+function tooltipOptionClicked() {
+    d3.select('#tooltipOption').style('display', 'block')
+    d3.select('#options-content').style('display', 'none')
+}
+
 async function onclick() {
     let stmt = d3.select('#queryArea').node().value;
 
@@ -242,5 +283,42 @@ d3.select('#infoAxis')
             .attr('dx', '-0.3em')
             .attr('dy', '-0.15em')
     })
+
+function setTooltipOption(using) {
+    using.forEach(e=>d3.select(`#TC${e}`).property('checked', true))
+}
+
+let decodedCookie = decodeURIComponent(document.cookie)
+let cookies = {};
+let ars = decodedCookie.split(';').map(d=>d.trim().split('='))
+ars.forEach(e=>cookies[e[0]] = e[1])
+
+globalThis.tooltips = {
+    columns: new Set(['service', 'delay', 'gen', 'wait', 'sch', 'fin']),
+    changed: true,
+}
+if ('tooltipsOption' in cookies) {
+    globalThis.tooltips.columns = new Set(JSON.parse(cookies['tooltipsOption']))
+}
+
+setTooltipOption(globalThis.tooltips.columns)
+
+function optionChanged(ele) {
+    const target = ele.target;
+    if (target.checked) {
+        globalThis.tooltips.columns.add(target.value);
+    } else {
+        globalThis.tooltips.columns.delete(target.value);
+    }
+
+    globalThis.tooltips.changed = true;
+    document.cookie = `tooltipsOption=${JSON.stringify(Array.from(globalThis.tooltips.columns))};`
+}
+
+d3.selectAll('#tooltipOption input').on('change', optionChanged)
+
+d3.select('#optionButton').on('click', menuClicked)
+d3.select('#optionTooltip').on('click', tooltipOptionClicked)
+window.addEventListener('click', outsideClickChecker)
 
 d3.select('#sqlSubmit').node().click()

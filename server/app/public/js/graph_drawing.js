@@ -172,25 +172,55 @@ function updateWaitRect(update, style) {
         .attr('y', d => globalThis.yAxis.y2(d.order * style.bar.cellH))
         .attr('height', globalThis.yAxis.y2(style.bar.h) - globalThis.yAxis.y2(0))
 
-    // updateHoverTooltip(update)
     return update.attr('fill', waitColor)
 }
 
 function updateHoverTooltip(update) {
+    const showingDict = {
+        'service': d=>`service time: ${(d.fin - d.gen).toLocaleString()}us`,
+        'delay': d=>`delay time: ${(d.sch - d.wait).toLocaleString()}us`,
+        'gen': d=>`start: ${d.gen.toLocaleString()}us`,
+        'wait': d=>`wait: ${d.wait.toLocaleString()}us`,
+        'sch': d=>`sch: ${d.sch.toLocaleString()}us`,
+        'fin': d=>`end: ${d.fin.toLocaleString()}us`,
+        'id': d=>`db-id: ${d.id}`,
+        'requestsId': d=>`requestsId: ${d.requestsId}`,
+        'source': d=>`source: ${d.txSource}`,
+        'type': d=>`type: ${d.txType}`,
+        'txId': d=>`transaction id: ${d.txId}`
+    }
+
     update.on('mouseover', null)
         .on('mousemove', null)
         .on('mouseout', null)
 
-    return update.on('mouseover', function (event, d) {
-        let tooltip = d3.select('#tooltip')
-        tooltip.select('#service').text(`service time: ${(d.fin - d.gen).toLocaleString()}us`)
-        tooltip.select('#delay').text(`delay time: ${(d.sch - d.wait).toLocaleString()}us`)
-        tooltip.select('#start').text(`start: ${d.gen.toLocaleString()}us`)
-        tooltip.select('#wait').text(`wait: ${d.wait.toLocaleString()}us`)
-        tooltip.select('#sch').text(`sch: ${d.sch.toLocaleString()}us`)
-        tooltip.select('#end').text(`end: ${d.fin.toLocaleString()}us`)
-        return tooltip.style("visibility", "visible");
-    })
+    return update.on('mouseover', function (event, ele) {
+            let tooltip = d3.select('#tooltip')
+            if (globalThis.tooltips.changed) {
+                let using = Object.keys(showingDict).filter(x=>globalThis.tooltips.columns.has(x))
+                
+                tooltip.selectAll('g')
+                    .data(using)
+                    .join(
+                        enter => {
+                            let elementG = enter.append('g')
+                            elementG.append('text')
+                                .text(d=>showingDict[d](ele))
+                            elementG.append('br')
+                        },  
+                        update => {
+                            update.select('text')
+                            .text(d=>showingDict[d](ele))
+                        },
+                        exit => {
+                            exit.remove()
+                        }
+                    )
+            }
+
+            let vis = globalThis.tooltips.columns.size > 0 ? 'visible' : 'hidden';
+            return tooltip.style('visibility', vis)
+        })
         .on('mousemove', function (e) {
             return d3.select('#tooltip').style("top", (e.pageY - 10) + "px").style("left", (e.pageX + 10) + "px");
         })

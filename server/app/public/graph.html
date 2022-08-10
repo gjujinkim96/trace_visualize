@@ -5,29 +5,57 @@
     <link rel="stylesheet" href="css/graph.css">
 </head>
 <body>
-    <div id="tooltip">
-        <text id="service"></text>
-        <br>
-        <text id="delay"></text>
-        <br>
-        <text id="start"></text>
-        <br>
-        <text id="wait"></text>
-        <br>
-        <text id="sch"></text>
-        <br>
-        <text id="end"></text>
-    </div>
-
     <div id="alert">
         <text id="alertText">Wrong Sql</text>
         <span id="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
     </div>
 
     <div id="topBar">
+        <div id="sqlQuery">
         <textarea id="queryArea"></textarea>
         <button id="sqlSubmit"></button>
         <text id="info">Total 0 transactions</text>
+    </div>
+        <div id="options">
+            <button id="optionButton"></button>
+            <div id="options-content">
+                <ul>
+                    <li id="optionTooltip">Tooltip</li>
+                    <li id="optionSorting">Sorting</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="tooltipOption">
+        <h3 id="tooltipOptionTitle">Select info to show for tooltip</h3>
+        <hr class="tooltipHr">
+        <input type="checkbox" id="TCservice" value="service">
+        <label for="TCservice">service time(end-start)</label> <br>
+        <input type="checkbox" id="TCdelay" value="delay">
+        <label for="TCdelay">delay time(sch-wait)</label> <br>
+        <input type="checkbox" id="TCgen" value="gen">
+        <label for="TCgen">start</label> <br>
+        <input type="checkbox" id="TCwait" value="wait">
+        <label for="TCwait">wait</label> <br>
+        <input type="checkbox" id="TCsch" value="sch">
+        <label for="TCsch">sch</label> <br>
+        <input type="checkbox" id="TCfin" value="fin">
+        <label for="TCfin">end</label> <br>
+        <hr class="tooltipHr">
+        <input type="checkbox" id="TCid" value="id">
+        <label for="TCid">db-id</label> <br>
+        <input type="checkbox" id="TCrequestsId" value="requestsId">       
+        <label for="TCrequestsId">requestsId</label> <br>
+        <input type="checkbox" id="TCsource" value="source">
+        <label for="TCsource">source</label> <br>
+        <input type="checkbox" id="TCtype" value="type">
+        <label for="TCtype">type</label> <br>
+        <input type="checkbox" id="TCtxId" value="txId">       
+        <label for="TCtxId">txId</label> <br>
+    </div>
+
+    <div id="tooltip">
     </div>
 
     <svg id="mainSvg">
@@ -66,7 +94,6 @@
             <g id="delayLegendG"></g>
         </g>
     </svg>
-
     <script src="js/graph.js" type="module"></script>
 </body>
 </html>

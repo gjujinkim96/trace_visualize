@@ -1,5 +1,5 @@
 import * as gd from "/js/graph_drawing.js";
-import Sortable from '/modules/sortablejs/modular/sortable.esm.js';
+import Sortable from '/sortablejs/modular/sortable.esm.js';
 
 function getSeenOrder(txs) {
     const requestsIdOrder = { 'CACHE': txs.length, 'GC': txs.length + 1, 'MAPPING': txs.length + 2 };

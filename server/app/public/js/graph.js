@@ -1,4 +1,5 @@
-import * as gd from "/js/graph_drawing.js"
+import * as gd from "/js/graph_drawing.js";
+import Sortable from '/modules/sortablejs/modular/sortable.esm.js';
 
 function getSeenOrder(txs) {
     const requestsIdOrder = { 'CACHE': txs.length, 'GC': txs.length + 1, 'MAPPING': txs.length + 2 };
@@ -14,25 +15,7 @@ function getSeenOrder(txs) {
     return requestsIdOrder;
 }
 
-// update.on('mouseover', null)
-//         .on('mousemove', null)
-//         .on('mouseout', null)
-
-//     return update.on('mouseover', function (event, d) {
-//         let tooltip = d3.select('#tooltip')
-//         tooltip.select('#service').text(`service time: ${(d.fin - d.gen).toLocaleString()}us`)
-//         tooltip.select('#start').text(`start: ${d.gen.toLocaleString()}us`)
-//         tooltip.select('#end').text(`end: ${d.fin.toLocaleString()}us`)
-//         return tooltip.style("visibility", "visible");
-//     })
-//         .on('mousemove', function (e) {
-//             return d3.select('#tooltip').style("top", (e.pageY - 10) + "px").style("left", (e.pageX + 10) + "px");
-//         })
-//         .on('mouseout', function (e) {
-//             return d3.select('#tooltip').style("visibility", "hidden");
-//         })
-
-function menuClicked() {    
+function menuClicked(e) {    
     const menu = d3.select('#options-content')
 
     const nextDisplay = menu.style('display') == 'none' ? 'block' : 'none';
@@ -44,15 +27,41 @@ function outsideClickChecker(e) {
          d3.select('#options-content').style('display', 'none')
     }
 
-    if (!(document.getElementById('tooltipOption').contains(e.target) || 
-        document.getElementById('optionTooltip').contains(e.target))) {
+    if (!document.getElementById('tooltipOption').contains(e.target)) {
         d3.select('#tooltipOption').style('display', 'none')
+    }
+
+    if (!document.getElementById('sortingOption').contains(e.target)) {
+        d3.select('#sortingOption').style('display', 'none')
     }
 }
 
-function tooltipOptionClicked() {
+function tooltipOptionClicked(e) {
     d3.select('#tooltipOption').style('display', 'block')
     d3.select('#options-content').style('display', 'none')
+    e.stopPropagation()
+}
+
+function sortingOptionClicked(e) {
+    d3.select('#sortingOption').style('display', 'block')
+    d3.select('#options-content').style('display', 'none')
+    e.stopPropagation()
+}
+
+function addSortingItemClicked(e) {
+    let list = d3.select('#sortingItems').node()
+    let copy = d3.select('.sortingListCopy').clone(true)
+    copy.select('button').on('click', deleteSortingItemClicked)
+    list.appendChild(copy.node())
+    e.stopPropagation()
+}
+
+function deleteSortingItemClicked(e) {
+    let item = e.target.closest('li')
+    let list = e.target.closest('ol')
+
+    list.removeChild(item)
+    e.stopPropagation()
 }
 
 async function onclick() {
@@ -67,9 +76,9 @@ async function onclick() {
     let result = await fetch(`${window.location.protocol}//${window.location.host}/tx/${traceId}?sql=${stmt}`)
     let info = d3.select('#info')
     if (result.ok) {
-        let data = await result.json()
-        info.text(`Total ${data.length} transactions`)
-        updateByNewData(data, style)
+        globalThis.data = await result.json()
+        info.text(`Total ${globalThis.data.length} transactions`)
+        updateByNewData(style)
     } else {
         console.log('not okay')
         let alertDiv = d3.select('#alert')
@@ -80,7 +89,7 @@ async function onclick() {
 }
 
 async function onTargetClick() {
-    let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A where A.gen <= tx.fin and tx.gen <= A.fin order by tx.fin, tx.gen, tx.requestsId, tx.txId`
+    let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A where A.gen <= tx.fin and tx.gen <= A.fin`
 
     console.log('STMT', stmt)
 
@@ -89,9 +98,9 @@ async function onTargetClick() {
     let result = await fetch(fetchUrl)
     let info = d3.select('#info')
     if (result.ok) {
-        let data = await result.json()
-        info.text(`Total ${data.length} transactions`)
-        updateByNewData(data, style)
+        globalThis.data = await result.json()
+        info.text(`Total ${globalThis.data.length} transactions`)
+        updateByNewData(style)
     } else {
         console.log('What')
         console.log('bad', result)
@@ -99,7 +108,11 @@ async function onTargetClick() {
     }
 }
 
-function updateByNewData(txs, style) {
+function updateByNewData(style) {
+    sortData();
+    saveSortingOption();
+
+    let txs = globalThis.data
     console.log(`Total transactions: ${txs.length}`)
     globalThis.seenOrder = getSeenOrder(txs)
     txs.forEach(function (ele, i) {
@@ -225,7 +238,7 @@ let url = new URL(window.location.href)
 let traceId = url.searchParams.get('traceId')
 let target = url.searchParams.get('target')
 
-const stmtDefault = 'select * from tx order by fin';
+const stmtDefault = 'select * from tx';
 const queryArea = d3.select('#queryArea')
     .attr('placeholder', stmtDefault)
 
@@ -235,6 +248,9 @@ if (!target) {
     sqlSubmit.text('click')
         .style('display', 'inline-block')
         .on('click', onclick)
+
+    let targetSortOption = d3.select('#sortingItemCopy .sortingCol option[value=target]')
+    targetSortOption.remove()
 } else {
     queryArea.style('display', 'none')
     sqlSubmit.style('display', 'none')
@@ -319,6 +335,94 @@ d3.selectAll('#tooltipOption input').on('change', optionChanged)
 
 d3.select('#optionButton').on('click', menuClicked)
 d3.select('#optionTooltip').on('click', tooltipOptionClicked)
+d3.select('#optionSorting').on('click', sortingOptionClicked)
 window.addEventListener('click', outsideClickChecker)
 
+let sortingItems = d3.select('#sortingItems')
+Sortable.create(sortingItems.node())
+d3.select('#addSortingItem').on('click', addSortingItemClicked)
+    .node().click()
+d3.select('#sortButton').on('click', sortButtonClicked)
+d3.select('#revertButton').on('click', revertButtonClicked)
+sortingItems.select('select').property('value', 'fin')
+
 d3.select('#sqlSubmit').node().click()
+
+function sortData() {
+    let items = d3.selectAll('#sortingItems li')
+    let columns = items.select('.sortingCol').nodes().map(d=>d.value);
+    let orderBy = items.select('.sortingBy').nodes().map(d=>d.value);
+
+    const columns2JSON = {
+        gen: d=>d.gen,
+        wait: d=>d.wait,
+        sch: d=>d.sch,
+        fin: d=>d.fin,
+        requestsId: d=>d.requestsId,
+        source: d=>d.txSource,
+        type: d=>d.txType,
+        txId: d=>d.txId,
+        service: d=>d.fin-d.gen,
+        delay: d=>d.sch-d.wait,
+        target: d=>d.target
+    }
+
+    globalThis.data.sort((a, b) => {
+        for (let idx=0; idx < columns.length; idx++) {
+            let col = columns[idx]
+            let comp = columns2JSON[col]
+            let curOrder = orderBy[idx]
+            let compA = comp(a)
+            let compB = comp(b)
+            if (compA != compB) {
+                if (curOrder === 'asc'){ 
+                    return compA > compB ? 1 : -1;
+                }
+                else {
+                    return compA > compB ? -1 : 1;
+                }
+            }
+        }
+        return 0;
+    })
+}
+
+function sortButtonClicked(e) {
+    updateByNewData(style);
+}
+
+function saveSortingOption() {
+    let items = d3.selectAll('#sortingItems li')
+    let columns = items.select('.sortingCol').nodes().map(d=>d.value);
+    let orderBy = items.select('.sortingBy').nodes().map(d=>d.value);
+    globalThis.sortingOption = {
+        columns: columns,
+        orderBy: orderBy
+    }
+}
+
+function revertButtonClicked(e) {
+    let baseLength = globalThis.sortingOption.columns.length 
+    let list = d3.select('#sortingItems').node();
+    console.log('li', list.children)
+    if (baseLength < list.children.length) {
+        let curLen = list.children.length
+        for (let i = 0; i < curLen - baseLength; i++) {
+            list.removeChild(list.lastChild)
+        }
+    }
+
+    if (list.children.length < baseLength) {
+        let curLen = list.children.length
+        for (let i = 0; i < baseLength - curLen; i++) {
+            let copy = d3.select('.sortingListCopy').clone(true)
+            copy.select('button').on('click', deleteSortingItemClicked)
+            list.appendChild(copy.node())
+        }
+    }
+
+    for (let i = 0; i < baseLength; i++) {
+        list.children[i].querySelector('.sortingCol').value = globalThis.sortingOption.columns[i];
+        list.children[i].querySelector('.sortingBy').value = globalThis.sortingOption.orderBy[i];
+    }
+}

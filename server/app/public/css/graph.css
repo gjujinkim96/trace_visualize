@@ -164,12 +164,13 @@ body {
     margin-right: 8px;
 }
 
-#tooltipOptionTitle {
-    margin: 0;
+.optionTitle {
+    margin: 2px;
     padding: 0;
+    text-align: center;
 }
 
-.tooltipHr {
+.optionHr {
     margin: 0;
     padding: 0;
     border: 1px solid royalblue;
@@ -186,4 +187,42 @@ body {
     visibility: hidden;
     background: #87CEEBe6;
     border: 1px solid black;
+}
+
+#sortingOption {
+    z-index: 9;
+    padding: 0;
+    background: #87CEEBe6;
+    position: absolute;
+    right: 200px;
+    top: 70px;
+    border: 1px solid black;
+    display: none;
+    right: 0;
+    top: 35px;
+
+    margin-right: 8px;
+}
+
+#sortingOption ol {
+    list-style-position:inside;
+    margin: 0;
+    padding: 0;
+}
+
+#sortingOption li {
+    margin: 0;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-bottom: 1px solid black;
+}
+
+#sortingOption li:last-child {
+    border-bottom: 0px
+}
+
+#sortingItemCopy {
+    display: none;
 }

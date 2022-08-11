@@ -4,7 +4,7 @@ EXPOSE 3000
 
 WORKDIR /home/node/app
 
-RUN npm init -y && npm install express mysql2
+RUN npm init -y && npm install express mysql2 sortablejs
 
 
 COPY app/main.js main.js

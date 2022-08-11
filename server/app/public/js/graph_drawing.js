@@ -1,15 +1,30 @@
 const colors = ['lightskyblue', 'lightcoral', 'lightsalmon', 'lightslategray']
-const sourceColors = {
+
+
+function sortJsonByKey(json) {
+    return Object.keys(json).sort().reduce(
+        (obj, key) => {
+            obj[key] = json[key];
+            return obj
+        }, {}
+    )
+}
+
+const sourceColorsBase = {
     'USERIO': 'darkgreen',
     'CACHE': 'darkred',
     'GC': 'yellow',
     'MAPPING': 'navy'
 }
-const typeColors = {
+
+const sourceColors = sortJsonByKey(sourceColorsBase)
+
+const typeColorsBase = {
     'READ': 'royalblue',
     'WRITE': 'tomato',
     'ERASE': 'yellowgreen'
 }
+const typeColors = sortJsonByKey(typeColorsBase)
 const targetColor = {
     'X': '#ffffff00',
     'O': 'red'

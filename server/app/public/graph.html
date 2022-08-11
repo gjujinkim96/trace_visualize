@@ -28,21 +28,21 @@
     </div>
 
     <div id="tooltipOption">
-        <h3 id="tooltipOptionTitle">Select info to show for tooltip</h3>
-        <hr class="tooltipHr">
+        <h3 class="optionTitle">Select info to show for tooltip</h3>
+        <hr class="optionHr">
         <input type="checkbox" id="TCservice" value="service">
         <label for="TCservice">service time(end-start)</label> <br>
         <input type="checkbox" id="TCdelay" value="delay">
         <label for="TCdelay">delay time(sch-wait)</label> <br>
         <input type="checkbox" id="TCgen" value="gen">
-        <label for="TCgen">start</label> <br>
+        <label for="TCgen">gen</label> <br>
         <input type="checkbox" id="TCwait" value="wait">
         <label for="TCwait">wait</label> <br>
         <input type="checkbox" id="TCsch" value="sch">
         <label for="TCsch">sch</label> <br>
         <input type="checkbox" id="TCfin" value="fin">
-        <label for="TCfin">end</label> <br>
-        <hr class="tooltipHr">
+        <label for="TCfin">fin</label> <br>
+        <hr class="optionHr">
         <input type="checkbox" id="TCid" value="id">
         <label for="TCid">db-id</label> <br>
         <input type="checkbox" id="TCrequestsId" value="requestsId">       
@@ -56,6 +56,40 @@
     </div>
 
     <div id="tooltip">
+    </div>
+
+    <div id="sortingOption">
+        <h3 class="optionTitle">Sorting order</h3>
+        <hr class="optionHr">
+        <ol id="sortingItems">
+        </ol>
+        <hr class="optionHr">
+        <button id="addSortingItem">&plus;</button>
+        <button id="sortButton">Sort</button>
+        <button id="revertButton">Revert to last sort</button>
+    </div>
+
+    <div id="sortingItemCopy">
+        <li class="sortingListCopy">
+            <select class="sortingCol">
+                <option value="gen">gen</option>
+                <option value="wait">wait</option>
+                <option value="sch">sch</option>
+                <option value="fin">fin</option>
+                <option value="requestsId">requestsId</option>
+                <option value="source">source</option>
+                <option value="type">type</option>
+                <option value="txId">txId</option>
+                <option value="service">service</option>
+                <option value="delay">delay</option>
+                <option value="target">target</option>
+            </select>
+            <select class="sortingBy">
+                <option value="asc">&uparrow;</option>
+                <option value="desc">&downarrow;</option>
+            </select>
+            <button>&times;</button>
+        </li>
     </div>
 
     <svg id="mainSvg">

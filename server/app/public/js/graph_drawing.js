@@ -172,8 +172,8 @@ function updateBackgroundRect(update, style) {
 }
 
 function updateBarRect(update, style) {
-    update.attr('x', d => globalThis.xAxis.x2(d.gen))
-        .attr('width', d => globalThis.xAxis.x2(d.fin) - globalThis.xAxis.x2(d.gen))
+    update.attr('x', d => globalThis.xAxis.x2(d.host_interface_arrival_time))
+        .attr('width', d => globalThis.xAxis.x2(d.flash_service_finish_time) - globalThis.xAxis.x2(d.host_interface_arrival_time))
         .attr('y', d => globalThis.yAxis.y2(d.order * style.bar.cellH))
         .attr('height', globalThis.yAxis.y2(style.bar.h) - globalThis.yAxis.y2(0))
 
@@ -182,8 +182,8 @@ function updateBarRect(update, style) {
 }
 
 function updateWaitRect(update, style) {
-    update.attr('x', d => globalThis.xAxis.x2(d.wait))
-        .attr('width', d => globalThis.xAxis.x2(d.sch) - globalThis.xAxis.x2(d.wait))
+    update.attr('x', d => globalThis.xAxis.x2(d.tsu_arrival_time))
+        .attr('width', d => globalThis.xAxis.x2(d.flash_scheduling_time) - globalThis.xAxis.x2(d.tsu_arrival_time))
         .attr('y', d => globalThis.yAxis.y2(d.order * style.bar.cellH))
         .attr('height', globalThis.yAxis.y2(style.bar.h) - globalThis.yAxis.y2(0))
 
@@ -192,12 +192,12 @@ function updateWaitRect(update, style) {
 
 function updateHoverTooltip(update) {
     const showingDict = {
-        'service': d=>`service time: ${(d.fin - d.gen).toLocaleString()}us`,
-        'delay': d=>`delay time: ${(d.sch - d.wait).toLocaleString()}us`,
-        'gen': d=>`start: ${d.gen.toLocaleString()}us`,
-        'wait': d=>`wait: ${d.wait.toLocaleString()}us`,
-        'sch': d=>`sch: ${d.sch.toLocaleString()}us`,
-        'fin': d=>`end: ${d.fin.toLocaleString()}us`,
+        'service': d=>`service time: ${(d.flash_service_finish_time - d.host_interface_arrival_time).toLocaleString()}us`,
+        'delay': d=>`delay time: ${(d.flash_scheduling_time - d.tsu_arrival_time).toLocaleString()}us`,
+        'host_int_arr_time': d=>`host interface arrival time: ${d.host_interface_arrival_time.toLocaleString()}us`,
+        'tsu_arr_time': d=>`tsu arrival time: ${d.tsu_arrival_time.toLocaleString()}us`,
+        'flash_sche_time': d=>`flash scheduling time: ${d.flash_scheduling_time.toLocaleString()}us`,
+        'flash_serv_fin_time': d=>`flash service finish time: ${d.flash_service_finish_time.toLocaleString()}us`,
         'id': d=>`db-id: ${d.id}`,
         'requestsId': d=>`requestsId: ${d.requestsId}`,
         'source': d=>`source: ${d.txSource}`,

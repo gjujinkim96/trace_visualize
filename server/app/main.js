@@ -155,10 +155,10 @@ app.post('/trace/:traceName?', async (req, res)=> {
         let lines = csv.split(/\n|\r\n/)
         let rows = lines.map(function (v) {
             let line = v.split(',');
-            var gen = parseInt(line[0]),
-                wait = parseInt(line[1]),
-                sch = parseInt(line[2]),
-                fin = parseInt(line[3]),
+            var host_interface_arrival_time = parseInt(line[0]),
+                tsu_arrival_time = parseInt(line[1]),
+                flash_scheduling_time = parseInt(line[2]),
+                flash_service_finish_time = parseInt(line[3]),
 
                 requestsId,
                 txSource,
@@ -177,10 +177,13 @@ app.post('/trace/:traceName?', async (req, res)=> {
                 txId = parseInt(line[7]);
             }
 
-            return [traceId, gen, wait, sch, fin, requestsId, txSource, txType, txId]
+            return [traceId, 
+                host_interface_arrival_time, tsu_arrival_time,
+                flash_scheduling_time, flash_service_finish_time, 
+                requestsId, txSource, txType, txId]
         })
     
-        let txSql = 'INSERT INTO tx (traceId, gen, wait, sch, fin, requestsId, txSource, txType, txId) VALUES ?'
+        let txSql = 'INSERT INTO tx (traceId, host_interface_arrival_time, tsu_arrival_time, flash_scheduling_time, flash_service_finish_time, requestsId, txSource, txType, txId) VALUES ?'
         let result = await connection.query(txSql, [rows])
 
         let viewSql = `CREATE VIEW tx_${traceId} AS SELECT * FROM tx WHERE traceId=${traceId}`

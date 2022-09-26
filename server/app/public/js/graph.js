@@ -89,7 +89,7 @@ async function onclick() {
 }
 
 async function onTargetClick() {
-    let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A where A.gen <= tx.fin and tx.gen <= A.fin`
+    let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A where A.host_interface_arrival_time <= tx.flash_service_finish_time and tx.host_interface_arrival_time <= A.flash_service_finish_time`
 
     console.log('STMT', stmt)
 
@@ -122,8 +122,8 @@ function updateByNewData(style) {
     // set xAxis
     {
         let xr = {
-            lower: d3.min(txs, d => d.gen),
-            upper: d3.max(txs, d => d.fin),
+            lower: d3.min(txs, d => d.host_interface_arrival_time),
+            upper: d3.max(txs, d => d.flash_service_finish_time),
         }
         xr.bound = [xr.lower, xr.upper]
 
@@ -310,7 +310,7 @@ let ars = decodedCookie.split(';').map(d=>d.trim().split('='))
 ars.forEach(e=>cookies[e[0]] = e[1])
 
 globalThis.tooltips = {
-    columns: new Set(['service', 'delay', 'gen', 'wait', 'sch', 'fin']),
+    columns: new Set(['service', 'delay', 'host_int_arr_time', 'tsu_arr_time', 'flash_sche_time', 'flash_serv_fin_time']),
     changed: true,
 }
 if ('tooltipsOption' in cookies) {
@@ -344,7 +344,7 @@ d3.select('#addSortingItem').on('click', addSortingItemClicked)
     .node().click()
 d3.select('#sortButton').on('click', sortButtonClicked)
 d3.select('#revertButton').on('click', revertButtonClicked)
-sortingItems.select('select').property('value', 'fin')
+sortingItems.select('select').property('value', 'flash_serv_fin_time')
 
 d3.select('#sqlSubmit').node().click()
 
@@ -354,16 +354,16 @@ function sortData() {
     let orderBy = items.select('.sortingBy').nodes().map(d=>d.value);
 
     const columns2JSON = {
-        gen: d=>d.gen,
-        wait: d=>d.wait,
-        sch: d=>d.sch,
-        fin: d=>d.fin,
+        host_int_arr_time: d=>d.host_interface_arrival_time,
+        tsu_arr_time: d=>d.tsu_arrival_time,
+        flash_sche_time: d=>d.flash_scheduling_time,
+        flash_serv_fin_time: d=>d.flash_service_finish_time,
         requestsId: d=>d.requestsId,
         source: d=>d.txSource,
         type: d=>d.txType,
         txId: d=>d.txId,
-        service: d=>d.fin-d.gen,
-        delay: d=>d.sch-d.wait,
+        service: d=>d.flash_service_finish_time-d.host_interface_arrival_time,
+        delay: d=>d.flash_scheduling_time-d.tsu_arrival_time,
         target: d=>d.target
     }
 

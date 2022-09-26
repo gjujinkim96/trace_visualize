@@ -31,17 +31,17 @@
         <h3 class="optionTitle">Select info to show for tooltip</h3>
         <hr class="optionHr">
         <input type="checkbox" id="TCservice" value="service">
-        <label for="TCservice">service time(end-start)</label> <br>
+        <label for="TCservice">service time(Flash service finish time - Host interface arrival time)</label> <br>
         <input type="checkbox" id="TCdelay" value="delay">
-        <label for="TCdelay">delay time(sch-wait)</label> <br>
-        <input type="checkbox" id="TCgen" value="gen">
-        <label for="TCgen">gen</label> <br>
-        <input type="checkbox" id="TCwait" value="wait">
-        <label for="TCwait">wait</label> <br>
-        <input type="checkbox" id="TCsch" value="sch">
-        <label for="TCsch">sch</label> <br>
-        <input type="checkbox" id="TCfin" value="fin">
-        <label for="TCfin">fin</label> <br>
+        <label for="TCdelay">delay time(Flash scheduling time - TSU arrival time)</label> <br>
+        <input type="checkbox" id="TChost_int_arr_time" value="host_int_arr_time">
+        <label for="TChost_int_arr_time">Host interface arrival time</label> <br>
+        <input type="checkbox" id="TCtsu_arr_time" value="tsu_arr_time">
+        <label for="TCtsu_arr_time">TSU arrival time</label> <br>
+        <input type="checkbox" id="TCflash_sche_time" value="flash_sche_time">
+        <label for="TCflash_sche_time">Flash scheduling time</label> <br>
+        <input type="checkbox" id="TCflash_serv_fin_time" value="flash_serv_fin_time">
+        <label for="TCflash_serv_fin_time">Flash service finish time</label> <br>
         <hr class="optionHr">
         <input type="checkbox" id="TCid" value="id">
         <label for="TCid">db-id</label> <br>
@@ -72,10 +72,10 @@
     <div id="sortingItemCopy">
         <li class="sortingListCopy">
             <select class="sortingCol">
-                <option value="gen">gen</option>
-                <option value="wait">wait</option>
-                <option value="sch">sch</option>
-                <option value="fin">fin</option>
+                <option value="host_int_arr_time">Host interface arrival time</option>
+                <option value="tsu_arr_time">TSU arrival time</option>
+                <option value="flash_sche_time">Flash scheduling time</option>
+                <option value="flash_serv_fin_time">Flash service finished time</option>
                 <option value="requestsId">requestsId</option>
                 <option value="source">source</option>
                 <option value="type">type</option>

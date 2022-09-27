@@ -89,7 +89,7 @@ async function onclick() {
 }
 
 async function onTargetClick() {
-    let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A where A.host_interface_arrival_time <= tx.flash_service_finish_time and tx.host_interface_arrival_time <= A.flash_service_finish_time`
+    let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A where A.tsu_arrival_time <= tx.flash_service_finish_time and tx.flash_scheduling_time <= A.flash_scheduling_time`
 
     console.log('STMT', stmt)
 

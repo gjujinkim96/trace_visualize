@@ -163,27 +163,37 @@ app.post('/trace/:traceName?', async (req, res)=> {
                 requestsId,
                 txSource,
                 txType,
-                txId;
+                txId,
+                channel,
+                chip,
+                die;
         
-            if (line.length === 6) {
+            if (line.length === 9) {
                 requestsId = null;
                 txSource = line[4];
                 txType = line[5];
                 txId = null;
+                channel = parseInt(line[6]);
+                chip = parseInt(line[7]);
+                die = parseInt(line[8]);
             } else {
                 requestsId = line[4],
                 txSource = line[5];
                 txType = line[6];
                 txId = parseInt(line[7]);
+                channel = parseInt(line[8]);
+                chip = parseInt(line[9]);
+                die = parseInt(line[10]);
             }
 
+            console.log(channel, chip, die);
             return [traceId, 
                 host_interface_arrival_time, tsu_arrival_time,
                 flash_scheduling_time, flash_service_finish_time, 
-                requestsId, txSource, txType, txId]
+                requestsId, txSource, txType, txId, channel, chip, die]
         })
     
-        let txSql = 'INSERT INTO tx (traceId, host_interface_arrival_time, tsu_arrival_time, flash_scheduling_time, flash_service_finish_time, requestsId, txSource, txType, txId) VALUES ?'
+        let txSql = 'INSERT INTO tx (traceId, host_interface_arrival_time, tsu_arrival_time, flash_scheduling_time, flash_service_finish_time, requestsId, txSource, txType, txId, channel, chip, die) VALUES ?'
         let result = await connection.query(txSql, [rows])
 
         let viewSql = `CREATE VIEW tx_${traceId} AS SELECT * FROM tx WHERE traceId=${traceId}`

@@ -23,6 +23,9 @@ CREATE TABLE tx
         txSource TEXT NOT NULL, 
         txType TEXT NOT NULL,
         txId INT,
+        channel INT,
+        chip INT,
+        die INT,
 
         FOREIGN KEY (traceID)
             REFERENCES trace(id)

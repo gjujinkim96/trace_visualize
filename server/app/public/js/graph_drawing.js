@@ -202,7 +202,10 @@ function updateHoverTooltip(update) {
         'requestsId': d=>`requestsId: ${d.requestsId}`,
         'source': d=>`source: ${d.txSource}`,
         'type': d=>`type: ${d.txType}`,
-        'txId': d=>`transaction id: ${d.txId}`
+        'txId': d=>`transaction id: ${d.txId}`,
+        'channel': d=>`channel: ${d.channel}`,
+        'chip': d=>`chip: ${d.chip}`,
+        'die': d=>`die: ${d.die}`,
     }
 
     update.on('mouseover', null)

@@ -89,7 +89,10 @@ async function onclick() {
 }
 
 async function onTargetClick() {
-    let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A where A.tsu_arrival_time <= tx.flash_service_finish_time and tx.flash_scheduling_time <= A.flash_scheduling_time`
+    let stmt = `select tx.*, (tx.id=${target}) as target from tx, (select * from tx where id = ${target}) A \
+    where A.tsu_arrival_time <= tx.flash_service_finish_time and \
+    tx.flash_scheduling_time <= A.flash_scheduling_time and \
+    A.channel = tx.channel and A.chip = tx.chip and A.die = tx.die`
 
     console.log('STMT', stmt)
 
@@ -310,7 +313,8 @@ let ars = decodedCookie.split(';').map(d=>d.trim().split('='))
 ars.forEach(e=>cookies[e[0]] = e[1])
 
 globalThis.tooltips = {
-    columns: new Set(['service', 'delay', 'host_int_arr_time', 'tsu_arr_time', 'flash_sche_time', 'flash_serv_fin_time']),
+    columns: new Set(['service', 'delay', 'host_int_arr_time',
+        'tsu_arr_time', 'flash_sche_time', 'flash_serv_fin_time']),
     changed: true,
 }
 if ('tooltipsOption' in cookies) {
@@ -364,7 +368,10 @@ function sortData() {
         txId: d=>d.txId,
         service: d=>d.flash_service_finish_time-d.host_interface_arrival_time,
         delay: d=>d.flash_scheduling_time-d.tsu_arrival_time,
-        target: d=>d.target
+        target: d=>d.target,
+        channel: d=>d.channel,
+        chip: d=>d.chip,
+        die: d=>d.die,
     }
 
     globalThis.data.sort((a, b) => {

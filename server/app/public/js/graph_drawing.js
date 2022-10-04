@@ -206,6 +206,7 @@ function updateHoverTooltip(update) {
         'channel': d=>`channel: ${d.channel}`,
         'chip': d=>`chip: ${d.chip}`,
         'die': d=>`die: ${d.die}`,
+        'plane': d=>`plane: ${d.plane}`,
     }
 
     update.on('mouseover', null)

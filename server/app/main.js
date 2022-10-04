@@ -166,9 +166,10 @@ app.post('/trace/:traceName?', async (req, res)=> {
                 txId,
                 channel,
                 chip,
-                die;
+                die,
+                plane;
         
-            if (line.length === 9) {
+            if (line.length === 10) {
                 requestsId = null;
                 txSource = line[4];
                 txType = line[5];
@@ -176,6 +177,7 @@ app.post('/trace/:traceName?', async (req, res)=> {
                 channel = parseInt(line[6]);
                 chip = parseInt(line[7]);
                 die = parseInt(line[8]);
+                plane = parseInt(line[9]);
             } else {
                 requestsId = line[4],
                 txSource = line[5];
@@ -184,16 +186,16 @@ app.post('/trace/:traceName?', async (req, res)=> {
                 channel = parseInt(line[8]);
                 chip = parseInt(line[9]);
                 die = parseInt(line[10]);
+                plane = parseInt(line[11]);
             }
 
-            console.log(channel, chip, die);
             return [traceId, 
                 host_interface_arrival_time, tsu_arrival_time,
                 flash_scheduling_time, flash_service_finish_time, 
-                requestsId, txSource, txType, txId, channel, chip, die]
+                requestsId, txSource, txType, txId, channel, chip, die, plane]
         })
     
-        let txSql = 'INSERT INTO tx (traceId, host_interface_arrival_time, tsu_arrival_time, flash_scheduling_time, flash_service_finish_time, requestsId, txSource, txType, txId, channel, chip, die) VALUES ?'
+        let txSql = 'INSERT INTO tx (traceId, host_interface_arrival_time, tsu_arrival_time, flash_scheduling_time, flash_service_finish_time, requestsId, txSource, txType, txId, channel, chip, die, plane) VALUES ?'
         let result = await connection.query(txSql, [rows])
 
         let viewSql = `CREATE VIEW tx_${traceId} AS SELECT * FROM tx WHERE traceId=${traceId}`
@@ -208,7 +210,7 @@ app.post('/trace/:traceName?', async (req, res)=> {
             console.log('Rollback')
             await connection.rollback()
         }
-        return handleErrorMsg(res, e, 500, 'Something wrong with db.',
+        return handleErrorMsg(res, e, 500, `Something wrong with db.`,
             `Some problem with db: /trace/${traceName}`)
     }
 })

@@ -26,6 +26,7 @@ CREATE TABLE tx
         channel INT,
         chip INT,
         die INT,
+        plane INT,
 
         FOREIGN KEY (traceID)
             REFERENCES trace(id)
